@@ -2,3 +2,4 @@
 **/*.pdb
 **/main.exe
 **/*.pcu
+**/*orig*.jpg
