@@ -1,0 +1,4 @@
+**/LibSource
+**/*.pdb
+**/main.exe
+**/*.pcu
