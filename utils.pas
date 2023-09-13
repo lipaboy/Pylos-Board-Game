@@ -21,6 +21,7 @@ type
     property Visible: boolean read m_figure.Visible write m_figure.Visible := value;
     property Position: Point3D read m_figure.Position;
     property Radius: real read m_figure.Radius;
+    property Figure: SphereT read m_figure;
     
   end;
     
