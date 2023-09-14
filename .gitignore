@@ -2,6 +2,3 @@
 **/*.pdb
 **/main.exe
 **/*.pcu
-**/*orig*.jpg
-res/Objects
-**/*.mtl

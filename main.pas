@@ -31,7 +31,7 @@ type
 
       roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', boardMaterial);
       roomModel.Rotate(V3D(1, 0, 0), 90);
-      roomModel.MoveOn(V3D(-35, -42, -5));
+      roomModel.MoveOn(V3D(-38, -42, -5));
       roomModel.Scale(20);
 
       boardModel := FileModel3D(0, 0, 0, 'pylos_board.obj', boardMaterial);
@@ -62,9 +62,6 @@ type
                 random(2) = 0 ? brightBallMaterial : darkBallMaterial), True);
           var (ex, ey) := (random(2), random(2));
           ball.Figure.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
-          // ball.Figure.Rotate(basis[1], random(2 * pi));
-          // ball.Figure.Rotate(basis[2], random(2 * pi));
-          // ball.Rotate(basis[random(3)], random(2 * pi));
           field[i, j, 0] := ball;
           ballList.Add(ball);
         end;
