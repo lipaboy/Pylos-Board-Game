@@ -5,14 +5,17 @@ uses utils;
 type
   GameHolder = class
   private
-    brightBallMaterial := ImageMaterial('res/tree_texture.jpg');
-    darkBallMaterial := ImageMaterial('res/tree_texture_dark.jpg');
+    brightBallMaterial := ImageMaterial('res/tree_texture.jpg')
+      + Materials.Specular(150,100) + Materials.Emissive(GrayColor(0));
+    darkBallMaterial := ImageMaterial('res/tree_texture_dark.jpg')
+      + Materials.Specular(150,100) + Materials.Emissive(GrayColor(0));
     boardMaterial := Materials.Diffuse(RGB(110,  51,  26)) 
       + Materials.Specular(150,100) + Materials.Emissive(GrayColor(0));
 
     field: array[0..6, 0..6, 0..3] of BallType;
     ballSelected: BallType := nil;
-    modelBoard: FileModelT := nil;
+    boardModel: FileModelT := nil;
+    roomModel: FileModelT := nil;
     ballList := new List<BallType>;
     textDebug: TextT := nil;
     ballCaught: BallType := nil;
@@ -21,15 +24,27 @@ type
   public
     constructor Create();
     begin
-      var textDebug := Text3D(-5,-11,5,'text ',2);
+      View3D.ShowGridLines := False;
+      View3D.BackgroundColor := Colors.Black;
 
-      modelBoard := FileModel3D(0, 0, 0, 'pylos_board.obj', boardMaterial);
-      modelBoard.Scale(0.2);
+      var textDebug := Text3D(-5,-11,5,'text ',2, Colors.Wheat);
+
+      roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', boardMaterial);
+      roomModel.Rotate(V3D(1, 0, 0), 90);
+      roomModel.MoveOn(V3D(-35, -42, -5));
+      roomModel.Scale(20);
+
+      boardModel := FileModel3D(0, 0, 0, 'pylos_board.obj', boardMaterial);
+      boardModel.Scale(0.2);
+
+      // Lights.AddDirectionalLight(RGB(255, 120, 50),V3D(-1,-1,-4));
+      Lights.AddSpotLight(RGB(155, 155, 0),P3D(5, 5, 5),V3D(-1, -1, -1),120,45);
       
       for var i := 0 to 6 do
         for var j := 0 to 6 do
           for var k := 0 to 3 do
             field[i,j,k] := nil;
+
       
       var radius := 1.1;
       var deltaX := 0.15 + 1;
