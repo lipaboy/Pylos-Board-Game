@@ -1,5 +1,4 @@
 ﻿uses Graph3D;
-uses global;
 uses utils;
 
 type
