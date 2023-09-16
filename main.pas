@@ -47,23 +47,24 @@ type
 
       
       var radius := 1.1;
-      var deltaX := 0.15 + 1;
-      var deltaY := 0.17 + 1;
+      var halfDeltaX := 0.15 + 1;
+      var halfDeltaY := 0.17 + 1;
+      var deltaZ := sqrt(sqr(2 * radius) - (sqr(2 * halfDeltaX) + sqr(2 * halfDeltaY)) / 4.0);
       var x0 := -3.4;
       var y0 := -3.5;
       var z0 := 0.94 + radius;
-      // var m := Arr((1,2,3),(4,5,6),(7,8,9));
-      var basis := Arr(V3D(1, 0, 0), V3D(0, 1, 0), V3D(0, 0, 1));
-      for var i := 0 to 6 step 2 do begin
-        for var j := 0 to 6 step 2 do begin
-          var ball := 
-            new BallType(
-              Sphere(x0 + j * deltaX, y0 + i * deltaY, z0, radius, 
-                random(2) = 0 ? brightBallMaterial : darkBallMaterial), True);
-          var (ex, ey) := (random(2), random(2));
-          ball.Figure.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
-          field[i, j, 0] := ball;
-          ballList.Add(ball);
+      for var k:= 0 to 3 do begin
+        for var i := k to 6 - k step 2 do begin
+          for var j := k to 6 - k step 2 do begin
+            var ball := 
+              new BallType(
+                Sphere(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ, radius, 
+                  random(2) = 0 ? brightBallMaterial : darkBallMaterial), True);
+            var (ex, ey) := (random(2), random(2));
+            ball.Figure.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
+            field[i, j, 0] := ball;
+            ballList.Add(ball);
+          end;
         end;
       end;
 
