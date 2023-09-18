@@ -33,7 +33,7 @@ type
       roomModel.MoveOn(V3D(-38, -42, -5));
       roomModel.Scale(20);
 
-      boardModel := FileModel3D(0, 0, 0, 'pylos_board.obj', boardMaterial);
+      boardModel := FileModel3D(0, 0, 0, 'res/pylos_board.obj', boardMaterial);
       boardModel.Scale(0.2);
 
       // Lights.AddDirectionalLight(RGB(255, 120, 50),V3D(-1,-1,-4));
