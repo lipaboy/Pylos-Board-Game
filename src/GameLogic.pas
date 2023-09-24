@@ -1,37 +1,23 @@
 unit GameLogic;
 
-const
-  GAME_BASE_WIDTH = 4;
-  GAME_BASE_HEIGHT = 4;
-  PLAYER_BALL_COUNT = 30 div 2;
-  FIELD_WIDTH = 2 * GAME_BASE_WIDTH - 1;
-  FIELD_HEIGHT = GAME_BASE_HEIGHT;
-  FWid = FIELD_WIDTH - 1;
-  FHei = FIELD_HEIGHT - 1;
+uses Players;
+uses GameSettings;
 
+// ---------------- GameLogic ----------------- //
 
 type
-  PlayerT = (BrightPlayer, DarkPlayer);
-
-type
-  ISubscriberT = interface
-    procedure notify();
-  end;
-
-type
-  CellT = (Bright, Dark, Empty);
-
-type
-  IndexT = System.Tuple<Integer, Integer, Integer>;
+  PlayersDictT = Dictionary<PlayerEnumT, PlayerT>;
 
 type
   GameLogicT = class
   private
+    m_players : PlayersDictT;
+    m_currPlayer: PlayerEnumT;
+    m_isGameInitializing := false;
+
     field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
     m_availablePos := new List<IndexT>;
     selectableBalls := new List<IndexT>;
-    m_player: PlayerT;
-    m_isGameInitializing := false;
 
     subscriberList := new List<ISubscriberT>;
   public
@@ -41,21 +27,46 @@ type
 
     procedure Start();
     begin
+      m_players := 
+        Arr((BrightPlayer, PlayerT.Create(BrightPlayer)),
+          (DarkPlayer, PlayerT.Create(DarkPlayer)))
+            .ToDictionary(x->x[0], x->x[1]);
+
       for var i := 0 to FWid do 
         for var j := 0 to FWid do 
           for var k := 0 to FHei do 
             field[i, j, k] := Empty;
 
-      m_player := BrightPlayer;
+      m_currPlayer := BrightPlayer;
       m_isGameInitializing := true;
 
       calcAvailablePos();
       notifyAll();
+
+      m_isGameInitializing := false;
     end;
 
-    property Player: PlayerT read m_player;
+    procedure MakeStep(stepInd : IndexT);
+    begin
+      if not IsEmptyIndex(stepInd) then begin
+        SetCell(stepInd, GetCellByPlayer(m_currPlayer));
+        m_players.Item[m_currPlayer].BallsRemain -= 1;
+
+        m_currPlayer := NextPlayer(m_currPlayer);
+
+        calcAvailablePos();
+        notifyAll();
+      end
+    end;
+
+    property Player: PlayerT read m_players.Item[m_currPlayer];
+    property PlayersDict: PlayersDictT read m_players;
     property IsGameInitializing: boolean read m_isGameInitializing;
     property AvailablePos: List<IndexT> read m_availablePos;
+    function Get(ind : IndexT) : CellT;
+    begin
+      Result := field[ind[0], ind[1], ind[2]];
+    end;
 
     procedure Subscribe(subscriber: ISubscriberT);
     procedure notifyAll();
@@ -63,28 +74,9 @@ type
   private
     procedure calcAvailablePos();
 
-    function Get(ind : IndexT) : CellT;
-    begin
-      Result := field[ind[0], ind[1], ind[2]];
-    end;
-
     procedure SetCell(ind : IndexT; val1 : CellT);
     begin
       field[ind[0], ind[1], ind[2]] := val1;
-    end;
-
-    function UpLeft(ind : IndexT) : IndexT := (ind[0] - 1, ind[1] - 1, ind[2] - 1);
-    function UpRight(ind : IndexT) : IndexT := (ind[0] - 1, ind[1] + 1, ind[2] - 1);
-    function BottomLeft(ind : IndexT) : IndexT := (ind[0] + 1, ind[1] - 1, ind[2] - 1);
-    function BottomRight(ind : IndexT) : IndexT := (ind[0] + 1, ind[1] + 1, ind[2] - 1);
-    function IsValid(ind : IndexT) : boolean;
-    begin
-      var k := ind[2];
-      if (k in 0..FHei) and (ind[0] in k..FWid-k) and (ind[1] in k..FWid-k) then begin
-        Result := true;
-      end
-      else
-        Result := false;
     end;
 
 

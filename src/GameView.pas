@@ -1,9 +1,13 @@
 unit GameView;
 
+uses GameSettings;
+uses Players;
+uses GameLogic;
+
+uses utils;
 uses Graph3D;
 uses Ball;
-uses utils;
-uses GameLogic;
+uses Timers;
 
 type
   GameViewT = class(ISubscriberT)
@@ -16,34 +20,59 @@ type
     darkBalls := new BallType[PLAYER_BALL_COUNT];
 
     ballSelected: BallType := nil;
+    indexSelected: IndexT;
     m_availablePos := new List<IndexT>;
+    rotTimer : Timer;
+    baseVecRotation := V3D(1, 0, 0);
 
     boardModel: FileModelT := nil;
     roomModel: FileModelT := nil;
 
-    textDebug: TextT := nil;
+    textDebug : TextT;
+    textBallCount : TextT;
+    textStep : TextT;
 
   public
     constructor Create(gameLogic: GameLogicT);
 
     procedure notify();
     begin
-      textDebug.Text := 'Ходит ' + (m_gameLogic.Player = BrightPlayer ? 'Светлый' : 'Тёмный') 
-        + ' игрок';
+      textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
+      textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
+        + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
+
+      for var i := 0 to FWid do
+        for var j := 0 to FWid do
+          for var k := 0 to FHei do begin
+            var elem := m_gameLogic.Get((i, j, k));
+            if elem <> CellT.Empty then
+            begin
+              var ball := new BallType(fieldCoords[i, j, k], GetPlayerByCell(elem), true);
+              // ball.Rotate(ballSelected.)
+              // var (ex, ey) := (random(2), random(2));
+              // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
+
+              field[i, j, k] := ball;
+            end;
+          end;
 
       if m_gameLogic.IsGameInitializing then
       begin
         Init();
       end;
 
-      if m_gameLogic.Player = BrightPlayer then
-      begin
-        ballSelected := BallType.Create(P3D(0, 0, 0), BrightPlayer, false);
-        m_availablePos := m_gameLogic.AvailablePos;
-      end;
+      ballSelected := BallType.Create(P3D(0, 0, 0), m_gameLogic.Player.Who, false);
+      m_availablePos := m_gameLogic.AvailablePos;
+      rotTimer := new Timer(30, procedure()->begin
+        ballSelected.Rotate(baseVecRotation, 1);
+        var f1 : function (): real := () -> power(random(-9.0, 9.0), 1.0);
+        Vector3D.Add( baseVecRotation, Vector3D.Create(f1(), f1(), f1()) );
+      end);
+      // rotTimer.Start();
     end;
 
   private
+
     procedure Init();
     begin
       for var i := 0 to FWid do
@@ -52,51 +81,68 @@ type
             field[i, j, k] := nil;
     end;
 
-    function FindNearestAvailableCoord(x, y: real) : (Point3D, boolean);
-    begin
-      var select: Point3D;
-      var isFound := false;
-
-      var nearest := real.MaxValue;
-      for var k := 0 to FHei do
-        for var i := k to FWid - k step 2 do
-          for var j := k to FWid - k step 2 do begin
-            var p := fieldCoords[i, j, k];
-            if m_availablePos.Contains((i, j, k)) 
-              and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS) then
-            begin
-              var dstToCamera := Camera.Position.Distance(p);
-              if dstToCamera < nearest then begin
-                isFound := true;
-                select := p;
-                nearest := dstToCamera;
-              end;
-            end;
-          end;
-
-      Result := (select, isFound);
-    end;
+    function FindNearestAvailableCoord(x, y: real) : (boolean, Point3D, IndexT);
 
     procedure AddMouseEvent();
-    begin
-      OnMouseMove += procedure (x,y,mb) -> begin
-        var selectPos := FindNearestAvailableCoord(x, y);
 
-        if ballSelected <> nil then begin
-          if not selectPos[1] then begin
-            ballSelected.Visible := false;
-          end
-          else begin
-            ballSelected.Visible := true;
-            if selectPos[0] <> ballSelected.Position then
-              ballSelected.Position := selectPos[0];
-          end;
+  end;
+
+  // ---------------- Реализация методов ---------------- //
+
+  procedure GameViewT.AddMouseEvent();
+  begin
+    OnMouseMove += procedure (x,y,mb) -> begin
+      var selectPos := FindNearestAvailableCoord(x, y);
+
+      if ballSelected <> nil then begin
+        if not selectPos[0] then begin
+          ballSelected.Visible := false;
+          indexSelected := EmptyIndex();
+        end
+        else begin
+          ballSelected.Visible := true;
+          if selectPos[1] <> ballSelected.Position then
+            ballSelected.Position := selectPos[1];
+            indexSelected := selectPos[2];
         end;
-
       end;
     end;
 
-  end;    // end of class
+    OnMouseDown += procedure(x, y, mb) -> begin
+      if mb = 1 then begin
+        rotTimer.Stop();
+        m_gameLogic.MakeStep(indexSelected);
+      end;
+    end;
+  end;
+
+  function GameViewT.FindNearestAvailableCoord(x, y: real) : (boolean, Point3D, IndexT);
+  begin
+    var select: Point3D;
+    var indFound := (-1, -1, -1);
+    var isFound := false;
+
+    var nearest := real.MaxValue;
+    for var k := 0 to FHei do
+      for var i := k to FWid - k step 2 do
+        for var j := k to FWid - k step 2 do begin
+          var p := fieldCoords[i, j, k];
+          var ind := (i, j, k);
+          if m_availablePos.Contains(ind) 
+            and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.2) then
+          begin
+            var dstToCamera := Camera.Position.Distance(p);
+            if dstToCamera < nearest then begin
+              isFound := true;
+              select := p;
+              indFound := ind;
+              nearest := dstToCamera;
+            end;
+          end;
+        end;
+
+    Result := (isFound, select, indFound);
+  end;
 
   constructor GameViewT.Create(gameLogic: GameLogicT);
   begin
@@ -109,7 +155,7 @@ type
 
     var boardMaterial := 
       Materials.Diffuse(RGB(110,  51,  26)) 
-        + Materials.Specular(150,100) + Materials.Emissive(GrayColor(0));
+        + Materials.Specular(150, 100) + Materials.Emissive(GrayColor(0));
 
     roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', boardMaterial);
     roomModel.Rotate(V3D(1, 0, 0), 90);
@@ -118,25 +164,36 @@ type
 
     boardModel := FileModel3D(0, 0, 0, 'res/pylos_board.obj', boardMaterial);
     boardModel.Scale(0.2);
-    textDebug := Text3D(-5,-9,2.5,'text ',2, Colors.Wheat);
+    
+    var baseY := -12.5;
+    var textColor := Colors.Brown;
+    textDebug := Text3D(0, baseY - 4, 0, 'debug',2, textColor);
+    textDebug.Rotate(V3D(1, 0, 0), 90);
+    textBallCount := Text3D(0, baseY, 0, '', 2, textColor);
+    textBallCount.Rotate(V3D(1, 0, 0), 90);
+    textStep := Text3D(0, baseY - 2, 0, '', 2, textColor);
+    textStep.Rotate(V3D(1, 0, 0), 90);
 
-    // Lights.AddDirectionalLight(RGB(255, 120, 50),V3D(-1,-1,-4));
-    Lights.AddSpotLight(RGB(155, 155, 0),P3D(5, 5, 5),V3D(-1, -1, -1),120,45);
+    Invoke(()->hvp.Children.RemoveAt(1));
+    Lights.AddDirectionalLight(RGB(255, 255, 255),V3D(-1,-1,-4));
+    Lights.AddSpotLight(RGB(155, 155, 0), P3D(5, 5, 5), V3D(-1, -1, -1), 120, 45);
 
 
     // ---- Создаём шары ---- //
 
-    for var i := 0 to brightBalls.Length - 1 do begin
-      var ball := new BallType(P3D(0, 0, 0), BrightPlayer, false);
-      brightBalls[i] := ball;
-    end;
+    // for var i := 0 to brightBalls.Length - 1 do begin
+    //   var ball := new BallType(P3D(0, 0, 0), BrightPlayer, false);
+    //   // var (ex, ey) := (random(2), random(2));
+    //   // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
+    //   brightBalls[i] := ball;
+    // end;
 
-    for var i := 0 to darkBalls.Length - 1 do begin
-      var ball := new BallType(P3D(0, 0, 0), DarkPlayer, false);
-      darkBalls[i] := ball;
-    end;
+    // for var i := 0 to darkBalls.Length - 1 do begin
+    //   var ball := new BallType(P3D(0, 0, 0), DarkPlayer, false);
+    //   darkBalls[i] := ball;
+    // end;
 
-    var radius := brightBalls[0].Radius;
+    var radius := BASE_RADIUS;
     
     var halfDeltaX := 0.15 + 1;
     var halfDeltaY := 0.17 + 1;
@@ -148,14 +205,6 @@ type
       for var i := k to FWid - k step 2 do begin
         for var j := k to FWid - k step 2 do begin
           fieldCoords[i, j, k] := P3D(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ);
-          // var ball := 
-          //   new BallType(
-          //     Sphere(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ, radius, 
-          //       random(2) = 0 ? brightBallMaterial : darkBallMaterial), True);
-          // var (ex, ey) := (random(2), random(2));
-          // ball.Figure.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
-          // field[i, j, 0] := ball;
-          // ballList.Add(ball);
         end;
       end;
     end;
