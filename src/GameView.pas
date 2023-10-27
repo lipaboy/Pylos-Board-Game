@@ -1,8 +1,9 @@
-unit GameView;
+﻿unit GameView;
 
 uses GameSettings;
 uses Players;
 uses GameLogic;
+uses FieldView;
 
 uses utils;
 uses Graph3D;
@@ -14,19 +15,22 @@ type
   private
     m_gameLogic: GameLogicT := nil;
 
-    field: array[0..FWid, 0..FWid, 0..FHei] of BallType;
-    fieldCoords: array[0..FWid, 0..FWid, 0..FHei] of Point3D;
-    brightBalls := new BallType[PLAYER_BALL_COUNT];
-    darkBalls := new BallType[PLAYER_BALL_COUNT];
+    m_field := new FieldViewT();
+    // field: array[0..FWid, 0..FWid, 0..FHei] of BallType;
+    // fieldCoords: array[0..FWid, 0..FWid, 0..FHei] of Point3D;
+
+    m_ballsToMove := new List<AvailableMovesT>;
+    indToMoveSelected := EmptyIndex();
 
     ballSelected: BallType := nil;
-    indexSelected: IndexT;
+    indexSelected := EmptyIndex();
     m_availablePos := new List<IndexT>;
     rotTimer : Timer;
-    baseVecRotation := V3D(1, 0, 0);
+    baseVecRotation : Vector3D;
 
     boardModel: FileModelT := nil;
     roomModel: FileModelT := nil;
+    carpetObj: FileModelT := nil;
 
     textDebug : TextT;
     textBallCount : TextT;
@@ -41,33 +45,37 @@ type
       textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
         + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
 
-      for var i := 0 to FWid do
-        for var j := 0 to FWid do
-          for var k := 0 to FHei do begin
-            var elem := m_gameLogic.Get((i, j, k));
-            if elem <> CellT.Empty then
-            begin
-              var ball := new BallType(fieldCoords[i, j, k], GetPlayerByCell(elem), true);
-              // ball.Rotate(ballSelected.)
-              // var (ex, ey) := (random(2), random(2));
-              // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
+      var updateField := procedure -> begin
+        for var i := 0 to FWid do
+          for var j := 0 to FWid do
+            for var k := 0 to FHei do begin
+              var ind := (i, j, k);
+              var elem := m_gameLogic.Get(ind);
+              if (elem <> CellT.Empty) and (m_field.Get(ind) = nil) then
+              begin
+                // var ball := new BallType(fieldCoords[i, j, k], GetPlayerByCell(elem), true);
+                // ball.Rotate(ballSelected.)
+                // var (ex, ey) := (random(2), random(2));
+                // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
 
-              field[i, j, k] := ball;
+                var ball := ballSelected;
+                ball.Visible := true;
+                m_field.SetBall(ind, ball);
+                exit;
+              end;
             end;
-          end;
+        end;
+      updateField();
 
       if m_gameLogic.IsGameInitializing then
       begin
         Init();
       end;
 
-      ballSelected := BallType.Create(P3D(0, 0, 0), m_gameLogic.Player.Who, false);
+      ballSelected := new BallType(P3D(0, 0, 0), m_gameLogic.Player.Who, false);
       m_availablePos := m_gameLogic.AvailablePos;
-      rotTimer := new Timer(30, procedure()->begin
-        ballSelected.Rotate(baseVecRotation, 1);
-        var f1 : function (): real := () -> power(random(-9.0, 9.0), 1.0);
-        Vector3D.Add( baseVecRotation, Vector3D.Create(f1(), f1(), f1()) );
-      end);
+      m_ballsToMove := m_gameLogic.BallsToMove;
+      
       // rotTimer.Start();
     end;
 
@@ -75,13 +83,11 @@ type
 
     procedure Init();
     begin
-      for var i := 0 to FWid do
-        for var j := 0 to FWid do
-          for var k := 0 to FHei do
-            field[i, j, k] := nil;
+      m_field.Reset();
+      // textDebug.Text := '' + carpetObj.Count();
     end;
 
-    function FindNearestAvailableCoord(x, y: real) : (boolean, Point3D, IndexT);
+    function FindNearestSelectable(x, y: real) : (boolean, boolean, IndexT);
 
     procedure AddMouseEvent();
 
@@ -92,18 +98,34 @@ type
   procedure GameViewT.AddMouseEvent();
   begin
     OnMouseMove += procedure (x,y,mb) -> begin
-      var selectPos := FindNearestAvailableCoord(x, y);
+      var (isFound, isBallToMove, ind) := FindNearestSelectable(x, y);
+
+      if (not isBallToMove) and (indToMoveSelected <> EmptyIndex()) then begin
+        m_field.Get(indToMoveSelected).SetSelected(false);
+        indToMoveSelected := EmptyIndex();
+      end;
 
       if ballSelected <> nil then begin
-        if not selectPos[0] then begin
+        if not isFound then begin
+          ballSelected.Visible := false;
+          indexSelected := EmptyIndex();
+          // textDebug.Text := '';
+        end
+        else if isBallToMove then begin
+          indToMoveSelected := ind;
+          m_field.Get(ind).SetSelected(true);
+          // if m_field.Get(ind) = nil then
+            // textDebug.Text := 'Ups: ' + ToStr(ind);
           ballSelected.Visible := false;
           indexSelected := EmptyIndex();
         end
         else begin
+          // textDebug.Text := '';
           ballSelected.Visible := true;
-          if selectPos[1] <> ballSelected.Position then
-            ballSelected.Position := selectPos[1];
-            indexSelected := selectPos[2];
+          if ind <> indexSelected then begin
+            ballSelected.Position := m_field.GetCoord(ind);
+            indexSelected := ind;
+          end;
         end;
       end;
     end;
@@ -111,37 +133,40 @@ type
     OnMouseDown += procedure(x, y, mb) -> begin
       if mb = 1 then begin
         rotTimer.Stop();
+        ballSelected.Visible := false;
         m_gameLogic.MakeStep(indexSelected);
       end;
     end;
   end;
 
-  function GameViewT.FindNearestAvailableCoord(x, y: real) : (boolean, Point3D, IndexT);
+  function GameViewT.FindNearestSelectable(x, y: real) : (boolean, boolean, IndexT);
   begin
-    var select: Point3D;
-    var indFound := (-1, -1, -1);
     var isFound := false;
+    var isBallToMoveFound := false;
+    var indFound := (-1, -1, -1);
 
     var nearest := real.MaxValue;
     for var k := 0 to FHei do
       for var i := k to FWid - k step 2 do
         for var j := k to FWid - k step 2 do begin
-          var p := fieldCoords[i, j, k];
           var ind := (i, j, k);
-          if m_availablePos.Contains(ind) 
+          var p := m_field.GetCoord(ind);
+          var isAvailable := ind in m_availablePos;
+          var isBallToMove := m_ballsToMove.Any(x -> (x[0] = ind) and (x[1].Count() > 0));
+          if (isAvailable or isBallToMove)
             and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.2) then
           begin
             var dstToCamera := Camera.Position.Distance(p);
             if dstToCamera < nearest then begin
               isFound := true;
-              select := p;
               indFound := ind;
               nearest := dstToCamera;
+              isBallToMoveFound := isBallToMove;
             end;
           end;
         end;
 
-    Result := (isFound, select, indFound);
+    Result := (isFound, isBallToMoveFound, indFound);
   end;
 
   constructor GameViewT.Create(gameLogic: GameLogicT);
@@ -162,6 +187,15 @@ type
     roomModel.MoveOn(V3D(-38, -42, -5));
     roomModel.Scale(20);
 
+// ImageMaterial('res/carpet.jpg')
+    // var mat := ImageMaterial('res/tree_texture.jpg', 10, 10);
+    // carpetObj := FileModel3D(0, 0, 0, 'res/Carpet.obj', mat);
+    // carpetObj.Rotate(V3D(1, 0, 0), 90);
+    // carpetObj.MoveOn(V3D(0, 0, 6));
+    // carpetObj.Scale(10);
+    // carpetObj.Material := mat;
+
+
     boardModel := FileModel3D(0, 0, 0, 'res/pylos_board.obj', boardMaterial);
     boardModel.Scale(0.2);
     
@@ -173,6 +207,8 @@ type
     textBallCount.Rotate(V3D(1, 0, 0), 90);
     textStep := Text3D(0, baseY - 2, 0, '', 2, textColor);
     textStep.Rotate(V3D(1, 0, 0), 90);
+
+//    textDebug.Text := '' + carpetObj.Items[0].X;
 
     Invoke(()->hvp.Children.RemoveAt(1));
     Lights.AddDirectionalLight(RGB(255, 255, 255),V3D(-1,-1,-4));
@@ -193,21 +229,12 @@ type
     //   darkBalls[i] := ball;
     // end;
 
-    var radius := BASE_RADIUS;
-    
-    var halfDeltaX := 0.15 + 1;
-    var halfDeltaY := 0.17 + 1;
-    var deltaZ := sqrt(sqr(2 * radius) - (sqr(2 * halfDeltaX) + sqr(2 * halfDeltaY)) / 4.0);
-    var x0 := -3.4;
-    var y0 := -3.5;
-    var z0 := 0.94 + radius;
-    for var k:= 0 to FHei do begin
-      for var i := k to FWid - k step 2 do begin
-        for var j := k to FWid - k step 2 do begin
-          fieldCoords[i, j, k] := P3D(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ);
-        end;
-      end;
-    end;
+    baseVecRotation := V3D(1, 0, 0);
+    rotTimer := new Timer(30, procedure()->begin
+      ballSelected.Rotate(baseVecRotation, 1);
+      var f1 : function (): real := () -> power(random(-1.0, 1.0), 2.0);
+      baseVecRotation := Vector3D.Add( baseVecRotation, Vector3D.Create(f1(), f1(), f1()) );
+    end);
     
     AddMouseEvent();
   end;

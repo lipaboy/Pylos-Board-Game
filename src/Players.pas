@@ -11,7 +11,7 @@ type
 		m_playerEn: PlayerEnumT;
 		m_ballRemains: Integer;
 	public
-		constructor(playerEn : PlayerEnumT);
+		constructor Create(playerEn : PlayerEnumT);
 		begin
 			m_playerEn := playerEn;
 			m_ballRemains := PLAYER_BALL_COUNT;

@@ -9,6 +9,9 @@ type
   PlayersDictT = Dictionary<PlayerEnumT, PlayerT>;
 
 type
+  AvailableMovesT = System.Tuple< IndexT, List<IndexT> >;
+
+type
   GameLogicT = class
   private
     m_players : PlayersDictT;
@@ -17,7 +20,8 @@ type
 
     field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
     m_availablePos := new List<IndexT>;
-    selectableBalls := new List<IndexT>;
+    m_ballsToMove := new List<AvailableMovesT>;
+    squareList := new List<IndexT>;
 
     subscriberList := new List<ISubscriberT>;
   public
@@ -63,6 +67,8 @@ type
     property PlayersDict: PlayersDictT read m_players;
     property IsGameInitializing: boolean read m_isGameInitializing;
     property AvailablePos: List<IndexT> read m_availablePos;
+    property BallsToMove: List<AvailableMovesT> read m_ballsToMove;
+
     function Get(ind : IndexT) : CellT;
     begin
       Result := field[ind[0], ind[1], ind[2]];
@@ -79,6 +85,17 @@ type
       field[ind[0], ind[1], ind[2]] := val1;
     end;
 
+    function isLocked(index : IndexT) : boolean;
+    begin
+      var indices := Arr(UpLeft(index), UpRight(index), DownLeft(index), DownRight(index));
+      foreach ind : IndexT in indices do begin
+        var tInd := Top(ind);
+        if (IsValid(tInd)) and (Get(tInd) <> Empty) then begin
+          Result := true;
+        end;
+      end;
+      Result := false;
+    end;
 
   end;
 
@@ -87,6 +104,8 @@ type
   procedure GameLogicT.calcAvailablePos();
   begin
     m_availablePos.Clear();
+    squareList.Clear();
+    m_ballsToMove.Clear();
 
     for var i := 0 to FWid step 2 do begin
       for var j := 0 to FWid step 2 do begin
@@ -104,21 +123,38 @@ type
         for var j := k to FWid - k step 2 do begin
           var ind := (i, j, k);
           if (Get(ind) = Empty)
-            and (Get(UpLeft(ind)) <> Empty)
-            and (Get(UpRight(ind)) <> Empty)
-            and (Get(BottomRight(ind)) <> Empty)
-            and (Get(BottomLeft(ind)) <> Empty) then
+            and (Get(UpLeft(Bottom(ind))) <> Empty)
+            and (Get(UpRight(Bottom(ind))) <> Empty)
+            and (Get(DownRight(Bottom(ind))) <> Empty)
+            and (Get(DownLeft(Bottom(ind))) <> Empty) then
           begin
             hasSquare := true;
             m_availablePos.Add(ind);
+            squareList.Add(ind);
           end;
         end;
       end;
-      if not hasSquare then
-      begin
-        break;
+    end;
+
+    for var k := 0 to FHei - 1 do begin
+      for var i := 0 to FWid step 2 do begin
+        for var j := 0 to FWid step 2 do begin
+          var ind := (i, j, k);
+          if (Get(ind) <> Empty) and (not isLocked(ind)) then
+          begin
+            var lst := new List<IndexT>();
+            foreach square: IndexT in squareList do begin
+              if square[2] > ind[2] then begin
+                lst.Add(square);
+              end;
+            end;
+            if lst.Count() > 0 then
+              m_ballsToMove.Add((ind, lst));
+          end;
+        end;
       end;
     end;
+
   end;
 
   procedure GameLogicT.Subscribe(subscriber: ISubscriberT);
