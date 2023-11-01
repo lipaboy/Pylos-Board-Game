@@ -1,5 +1,6 @@
 unit FieldView;
 
+uses Index;
 uses GameSettings;
 uses Ball;
 
@@ -18,10 +19,12 @@ type
     function Get(ind: IndexT) := field[ind[0], ind[1], ind[2]];
     procedure SetBall(ind: IndexT; ball: BallType);
     begin
+    	ball.Position := GetCoord(ind);
+    	ball.Visible := true;
     	field[ind[0], ind[1], ind[2]] := ball;
     end;
 
-		procedure Reset();
+		procedure Clear();
     begin
       for var i := 0 to FWid do
         for var j := 0 to FWid do

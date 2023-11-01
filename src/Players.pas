@@ -1,5 +1,6 @@
 unit Players;
 
+uses Cell;
 uses GameSettings;
 
 type

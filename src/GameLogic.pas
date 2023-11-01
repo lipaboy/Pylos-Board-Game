@@ -1,5 +1,8 @@
 unit GameLogic;
 
+uses Cell;
+uses Index;
+uses ISubscriber;
 uses Players;
 uses GameSettings;
 
@@ -16,7 +19,6 @@ type
   private
     m_players : PlayersDictT;
     m_currPlayer: PlayerEnumT;
-    m_isGameInitializing := false;
 
     field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
     m_availablePos := new List<IndexT>;
@@ -42,12 +44,12 @@ type
             field[i, j, k] := Empty;
 
       m_currPlayer := BrightPlayer;
-      m_isGameInitializing := true;
 
       calcAvailablePos();
-      notifyAll();
 
-      m_isGameInitializing := false;
+      var eventResult: GameEventResultT;
+      eventResult.IsInitializing := true;
+      notifyAll(eventResult);
     end;
 
     procedure MakeStep(stepInd : IndexT);
@@ -56,16 +58,20 @@ type
         SetCell(stepInd, GetCellByPlayer(m_currPlayer));
         m_players.Item[m_currPlayer].BallsRemain -= 1;
 
+        var eventResult: GameEventResultT;
+        eventResult.IsAdd := true;
+        eventResult.AddToPlaceInd := stepInd;
+        eventResult.Who := m_currPlayer;
+
         m_currPlayer := NextPlayer(m_currPlayer);
 
         calcAvailablePos();
-        notifyAll();
+        notifyAll(eventResult);
       end
     end;
 
     property Player: PlayerT read m_players.Item[m_currPlayer];
     property PlayersDict: PlayersDictT read m_players;
-    property IsGameInitializing: boolean read m_isGameInitializing;
     property AvailablePos: List<IndexT> read m_availablePos;
     property BallsToMove: List<AvailableMovesT> read m_ballsToMove;
 
@@ -75,7 +81,7 @@ type
     end;
 
     procedure Subscribe(subscriber: ISubscriberT);
-    procedure notifyAll();
+    procedure notifyAll(eventResult: GameEventResultT);
 
   private
     procedure calcAvailablePos();
@@ -162,10 +168,10 @@ type
     subscriberList.Add(subscriber);
   end;
 
-  procedure GameLogicT.notifyAll();
+  procedure GameLogicT.notifyAll(eventResult: GameEventResultT);
   begin
     foreach var s : ISubscriberT in subscriberList do begin
-      s.notify();
+      s.notify(eventResult);
     end;
   end;
 

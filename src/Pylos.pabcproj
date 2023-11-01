@@ -8,6 +8,7 @@
     <Item Type="SourceFile" Name="GameLogic.pas" Path="GameLogic.pas" />
     <Item Type="SourceFile" Name="GameSettings.pas" Path="GameSettings.pas" />
     <Item Type="SourceFile" Name="GameView.pas" Path="GameView.pas" />
+    <Item Type="SourceFile" Name="AddBallAction.pas" Path="AddBallAction.pas" />
     <Item Type="SourceFile" Name="Players.pas" Path="Players.pas" />
     <Item Type="SourceFile" Name="utils.pas" Path="utils.pas" />
     <Item Type="Reference" AssemblyName="System" FullAssemblyName="System.dll" />

@@ -1,9 +1,14 @@
 ﻿unit GameView;
 
-uses GameSettings;
+uses Index;
+uses Cell;
+uses ISubscriber;
 uses Players;
 uses GameLogic;
+uses GameSettings;
+
 uses FieldView;
+uses AddBallAction;
 
 uses utils;
 uses Graph3D;
@@ -16,15 +21,13 @@ type
     m_gameLogic: GameLogicT := nil;
 
     m_field := new FieldViewT();
-    // field: array[0..FWid, 0..FWid, 0..FHei] of BallType;
-    // fieldCoords: array[0..FWid, 0..FWid, 0..FHei] of Point3D;
+    m_addBallAction: AddBallActionT;   
 
     m_ballsToMove := new List<AvailableMovesT>;
     indToMoveSelected := EmptyIndex();
 
     ballSelected: BallType := nil;
     indexSelected := EmptyIndex();
-    m_availablePos := new List<IndexT>;
     rotTimer : Timer;
     baseVecRotation : Vector3D;
 
@@ -39,41 +42,23 @@ type
   public
     constructor Create(gameLogic: GameLogicT);
 
-    procedure notify();
+    procedure notify(eventResult: GameEventResultT);
     begin
       textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
       textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
         + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
 
-      var updateField := procedure -> begin
-        for var i := 0 to FWid do
-          for var j := 0 to FWid do
-            for var k := 0 to FHei do begin
-              var ind := (i, j, k);
-              var elem := m_gameLogic.Get(ind);
-              if (elem <> CellT.Empty) and (m_field.Get(ind) = nil) then
-              begin
-                // var ball := new BallType(fieldCoords[i, j, k], GetPlayerByCell(elem), true);
-                // ball.Rotate(ballSelected.)
-                // var (ex, ey) := (random(2), random(2));
-                // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
-
-                var ball := ballSelected;
-                ball.Visible := true;
-                m_field.SetBall(ind, ball);
-                exit;
-              end;
-            end;
-        end;
-      updateField();
-
-      if m_gameLogic.IsGameInitializing then
+      if eventResult.IsInitializing then
       begin
         Init();
+      end
+      else if eventResult.IsAdd then
+      begin
+        var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
+        m_field.SetBall(eventResult.AddToPlaceInd, ball);
       end;
 
       ballSelected := new BallType(P3D(0, 0, 0), m_gameLogic.Player.Who, false);
-      m_availablePos := m_gameLogic.AvailablePos;
       m_ballsToMove := m_gameLogic.BallsToMove;
       
       // rotTimer.Start();
@@ -83,11 +68,48 @@ type
 
     procedure Init();
     begin
-      m_field.Reset();
+      m_field.Clear();
+      m_addBallAction.Init();
+      AddMouseEvent();
       // textDebug.Text := '' + carpetObj.Count();
     end;
 
-    function FindNearestSelectable(x, y: real) : (boolean, boolean, IndexT);
+    function FindNearestAvailableIndex(x, y: real) : IndexT;
+    begin
+      var indFound := EmptyIndex();
+
+      var hoverInd := m_addBallAction.GetHoveredPlace();
+      if (hoverInd <> EmptyIndex()) 
+        and (GetRay(x, y).DistanceToPoint(m_field.GetCoord(hoverInd)) <= BASE_RADIUS) then
+      begin
+        textDebug.Text := '' + ToStr(hoverInd);
+        Result := hoverInd;
+        exit;
+      end;
+
+      var nearest := real.MaxValue;
+      for var k := 0 to FHei do
+        for var i := k to FWid - k step 2 do
+          for var j := k to FWid - k step 2 do begin
+            var ind := (i, j, k);
+            var p := m_field.GetCoord(ind);
+            var isAvailable := ind in m_gameLogic.AvailablePos;
+            var isBallToMove := m_ballsToMove.Any(x -> (x[0] = ind) and (x[1].Count() > 0));
+            // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
+            // самого шара
+            if (isAvailable or isBallToMove)
+              and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1) then
+            begin
+              var dstToCamera := Camera.Position.Distance(p);
+              if dstToCamera < nearest then begin
+                indFound := ind;
+                nearest := dstToCamera;
+              end;
+            end;
+          end;
+
+      Result := indFound;
+    end;
 
     procedure AddMouseEvent();
 
@@ -97,81 +119,26 @@ type
 
   procedure GameViewT.AddMouseEvent();
   begin
-    OnMouseMove += procedure (x,y,mb) -> begin
-      var (isFound, isBallToMove, ind) := FindNearestSelectable(x, y);
-
-      if (not isBallToMove) and (indToMoveSelected <> EmptyIndex()) then begin
-        m_field.Get(indToMoveSelected).SetSelected(false);
-        indToMoveSelected := EmptyIndex();
-      end;
-
-      if ballSelected <> nil then begin
-        if not isFound then begin
-          ballSelected.Visible := false;
-          indexSelected := EmptyIndex();
-          // textDebug.Text := '';
-        end
-        else if isBallToMove then begin
-          indToMoveSelected := ind;
-          m_field.Get(ind).SetSelected(true);
-          // if m_field.Get(ind) = nil then
-            // textDebug.Text := 'Ups: ' + ToStr(ind);
-          ballSelected.Visible := false;
-          indexSelected := EmptyIndex();
-        end
-        else begin
-          // textDebug.Text := '';
-          ballSelected.Visible := true;
-          if ind <> indexSelected then begin
-            ballSelected.Position := m_field.GetCoord(ind);
-            indexSelected := ind;
-          end;
-        end;
-      end;
+    OnMouseMove += procedure (x, y: real; mb) -> begin
+      m_addBallAction.TryHover(x, y);
     end;
 
     OnMouseDown += procedure(x, y, mb) -> begin
       if mb = 1 then begin
-        rotTimer.Stop();
-        ballSelected.Visible := false;
-        m_gameLogic.MakeStep(indexSelected);
+        m_addBallAction.PlaceBall(x, y);
+      //   rotTimer.Stop();
+      //   ballSelected.Visible := false;
+      //   m_gameLogic.MakeStep(indexSelected);
       end;
     end;
   end;
 
-  function GameViewT.FindNearestSelectable(x, y: real) : (boolean, boolean, IndexT);
-  begin
-    var isFound := false;
-    var isBallToMoveFound := false;
-    var indFound := (-1, -1, -1);
-
-    var nearest := real.MaxValue;
-    for var k := 0 to FHei do
-      for var i := k to FWid - k step 2 do
-        for var j := k to FWid - k step 2 do begin
-          var ind := (i, j, k);
-          var p := m_field.GetCoord(ind);
-          var isAvailable := ind in m_availablePos;
-          var isBallToMove := m_ballsToMove.Any(x -> (x[0] = ind) and (x[1].Count() > 0));
-          if (isAvailable or isBallToMove)
-            and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.2) then
-          begin
-            var dstToCamera := Camera.Position.Distance(p);
-            if dstToCamera < nearest then begin
-              isFound := true;
-              indFound := ind;
-              nearest := dstToCamera;
-              isBallToMoveFound := isBallToMove;
-            end;
-          end;
-        end;
-
-    Result := (isFound, isBallToMoveFound, indFound);
-  end;
+  
 
   constructor GameViewT.Create(gameLogic: GameLogicT);
   begin
     m_gameLogic := gameLogic;
+    m_addBallAction := new AddBallActionT(m_gameLogic, m_field);
 
     // ---- Создаём сцену ---- //
 
@@ -235,8 +202,6 @@ type
       var f1 : function (): real := () -> power(random(-1.0, 1.0), 2.0);
       baseVecRotation := Vector3D.Add( baseVecRotation, Vector3D.Create(f1(), f1(), f1()) );
     end);
-    
-    AddMouseEvent();
   end;
 
 
