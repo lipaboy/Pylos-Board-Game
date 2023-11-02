@@ -1,5 +1,7 @@
 unit GameLogic;
 
+uses utils;
+
 uses Cell;
 uses Index;
 uses ISubscriber;
@@ -20,12 +22,13 @@ type
     m_players : PlayersDictT;
     m_currPlayer: PlayerEnumT;
 
-    field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
+    m_field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
     m_availablePos := new List<IndexT>;
     m_ballsToMove := new List<AvailableMovesT>;
-    squareList := new List<IndexT>;
+    m_squareList := new List<IndexT>;
 
-    subscriberList := new List<ISubscriberT>;
+    m_subscriberList := new List<ISubscriberT>;
+
   public
     constructor Create();
     begin
@@ -41,18 +44,18 @@ type
       for var i := 0 to FWid do 
         for var j := 0 to FWid do 
           for var k := 0 to FHei do 
-            field[i, j, k] := Empty;
+            m_field[i, j, k] := Empty;
 
       m_currPlayer := BrightPlayer;
 
-      calcAvailablePos();
+      CalcAvailablePos();
 
       var eventResult: GameEventResultT;
       eventResult.IsInitializing := true;
-      notifyAll(eventResult);
+      NotifyAll(eventResult);
     end;
 
-    procedure MakeStep(stepInd : IndexT);
+    procedure AddBallStep(stepInd : IndexT);
     begin
       if not IsEmptyIndex(stepInd) then begin
         SetCell(stepInd, GetCellByPlayer(m_currPlayer));
@@ -65,52 +68,69 @@ type
 
         m_currPlayer := NextPlayer(m_currPlayer);
 
-        calcAvailablePos();
-        notifyAll(eventResult);
-      end
+        CalcAvailablePos();
+        NotifyAll(eventResult);
+      end;
     end;
 
     property Player: PlayerT read m_players.Item[m_currPlayer];
     property PlayersDict: PlayersDictT read m_players;
     property AvailablePos: List<IndexT> read m_availablePos;
     property BallsToMove: List<AvailableMovesT> read m_ballsToMove;
+    // debug
+    property SquareList: List<IndexT> read m_squareList;
 
     function Get(ind : IndexT) : CellT;
     begin
-      Result := field[ind[0], ind[1], ind[2]];
+      Result := m_field[ind[0], ind[1], ind[2]];
     end;
 
     procedure Subscribe(subscriber: ISubscriberT);
-    procedure notifyAll(eventResult: GameEventResultT);
+    procedure NotifyAll(eventResult: GameEventResultT);
 
   private
-    procedure calcAvailablePos();
+    procedure CalcAvailablePos();
 
     procedure SetCell(ind : IndexT; val1 : CellT);
     begin
-      field[ind[0], ind[1], ind[2]] := val1;
+      m_field[ind[0], ind[1], ind[2]] := val1;
     end;
 
-    function isLocked(index : IndexT) : boolean;
+    function IsLockedByTopBall(index : IndexT) : boolean;
     begin
-      var indices := Arr(UpLeft(index), UpRight(index), DownLeft(index), DownRight(index));
+      var indices := | UpLeft(index), UpRight(index), DownLeft(index), DownRight(index) |;
       foreach ind : IndexT in indices do begin
-        var tInd := Top(ind);
-        if (IsValid(tInd)) and (Get(tInd) <> Empty) then begin
+        var topInd := Top(ind);
+        if (IsValid(topInd)) and (Get(topInd) <> Empty) then begin
           Result := true;
+          exit;
         end;
       end;
       Result := false;
+    end;
+
+    function CanMoveBall(ballInd, placeInd : IndexT) : boolean;
+    begin
+      var indices := | UpLeft(placeInd), UpRight(placeInd), 
+                       DownLeft(placeInd), DownRight(placeInd) |;
+      foreach ind : IndexT in indices do begin
+        var bottomInd := Bottom(ind);
+        if bottomInd = ballInd then begin
+          Result := false;
+          exit;
+        end;
+      end;
+      Result := true;
     end;
 
   end;
 
   // ----------- Реализация методов -------------- //
 
-  procedure GameLogicT.calcAvailablePos();
+  procedure GameLogicT.CalcAvailablePos();
   begin
     m_availablePos.Clear();
-    squareList.Clear();
+    m_squareList.Clear();
     m_ballsToMove.Clear();
 
     for var i := 0 to FWid step 2 do begin
@@ -136,42 +156,45 @@ type
           begin
             hasSquare := true;
             m_availablePos.Add(ind);
-            squareList.Add(ind);
+            m_squareList.Add(ind);
           end;
         end;
       end;
     end;
 
     for var k := 0 to FHei - 1 do begin
-      for var i := 0 to FWid step 2 do begin
-        for var j := 0 to FWid step 2 do begin
+      for var i := k to FWid step 2 do begin
+        for var j := k to FWid step 2 do begin
           var ind := (i, j, k);
-          if (Get(ind) <> Empty) and (not isLocked(ind)) then
+          if (Get(ind) <> Empty) and (not IsLockedByTopBall(ind)) then
           begin
-            var lst := new List<IndexT>();
-            foreach square: IndexT in squareList do begin
-              if square[2] > ind[2] then begin
-                lst.Add(square);
-              end;
-            end;
-            if lst.Count() > 0 then
-              m_ballsToMove.Add((ind, lst));
+            var ballInd := ind;
+            var places := new List<IndexT>();
+
+            utils.log(ToStr(ballInd) + ' ');
+            foreach square: IndexT in m_squareList do
+              if (square[2] > ballInd[2]) and CanMoveBall(ballInd, square) then
+                places.Add(square);
+
+            if places.Count() > 0 then
+              m_ballsToMove.Add((ballInd, places));
           end;
         end;
       end;
     end;
+    utils.logln();
 
   end;
 
   procedure GameLogicT.Subscribe(subscriber: ISubscriberT);
   begin
-    subscriberList.Add(subscriber);
+    m_subscriberList.Add(subscriber);
   end;
 
-  procedure GameLogicT.notifyAll(eventResult: GameEventResultT);
+  procedure GameLogicT.NotifyAll(eventResult: GameEventResultT);
   begin
-    foreach var s : ISubscriberT in subscriberList do begin
-      s.notify(eventResult);
+    foreach var s : ISubscriberT in m_subscriberList do begin
+      s.Notify(eventResult);
     end;
   end;
 

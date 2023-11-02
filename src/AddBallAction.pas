@@ -60,11 +60,13 @@ type
       end;
     end;
 
-    procedure PlaceBall(x, y: real);
+    procedure UnHover() := Hover(EmptyIndex());
+
+    function TryPlaceBall(x, y: real): boolean;
     begin
       if GetHoveredPlace() <> EmptyIndex() then
       begin
-        m_gameLogic.MakeStep(GetHoveredPlace());
+        m_gameLogic.AddBallStep(GetHoveredPlace());
       end;
     end;
 

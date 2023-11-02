@@ -2,6 +2,31 @@ unit utils;
 
 uses Graph3D;
 
+///////////   Debug   //////////////
+
+  procedure logln(message: string := '');
+  begin
+    var f := OpenAppend('logError.txt', Encoding.UTF8);
+    Println(f, message);
+    f.Close();
+    // Println(message);
+  end;
+
+  procedure log(message: string);
+  begin
+    var f := OpenAppend('logError.txt', Encoding.UTF8);
+    Print(f, message);
+    f.Close();
+    // Print(message);
+  end;
+
+  procedure clearLogFile();
+  begin
+    var f := OpenWrite('logError.txt', Encoding.UTF8);
+    Print(f, '');
+    f.Flush();
+  end;
+
 ///////////   Geometry Extension   //////////////
 
   function LineIntersection(Self: Ray3D; other: Ray3D): Point3D; extensionmethod;

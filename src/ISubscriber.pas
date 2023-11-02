@@ -22,7 +22,7 @@ type
 
 type
   ISubscriberT = interface
-    procedure notify(eventResult: GameEventResultT);
+    procedure Notify(eventResult: GameEventResultT);
   end;
 
 end.

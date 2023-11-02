@@ -1,19 +1,5 @@
 ﻿uses Controller;
-
-procedure log(message: string);
-begin
-  var f := OpenWrite('logError.txt', Encoding.UTF8);
-  Println(f, message);
-  f.Flush();
-  Println(message);
-end;
-
-procedure clearLogFile();
-begin
-  var f := OpenWrite('logError.txt', Encoding.UTF8);
-  Print(f, '');
-  f.Flush();
-end;
+uses utils;
 
 begin 
   try
@@ -22,14 +8,14 @@ begin
     gameInstance.StartGame();
   except
     on e: System.IndexOutOfRangeException do
-      log(e.Message);
+      utils.logln(e.Message);
     on e: System.NullReferenceException do
-      log(e.Message);
+      utils.logln(e.Message);
     on e: System.IO.IOException do
-      log(e.Message);
+      utils.logln(e.Message);
     on e:System.SystemException do
-      log(e.Message);
+      utils.logln(e.Message);
     else
-      log('else exception');
+      utils.logln('else exception');
   end;
 end.

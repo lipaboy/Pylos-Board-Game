@@ -9,6 +9,7 @@ uses GameSettings;
 
 uses FieldView;
 uses AddBallAction;
+uses MoveBallAction;
 
 uses utils;
 uses Graph3D;
@@ -21,15 +22,8 @@ type
     m_gameLogic: GameLogicT := nil;
 
     m_field := new FieldViewT();
-    m_addBallAction: AddBallActionT;   
-
-    m_ballsToMove := new List<AvailableMovesT>;
-    indToMoveSelected := EmptyIndex();
-
-    ballSelected: BallType := nil;
-    indexSelected := EmptyIndex();
-    rotTimer : Timer;
-    baseVecRotation : Vector3D;
+    m_addBallAction: AddBallActionT;
+    m_moveBallAction: MoveBallActionT;
 
     boardModel: FileModelT := nil;
     roomModel: FileModelT := nil;
@@ -42,73 +36,15 @@ type
   public
     constructor Create(gameLogic: GameLogicT);
 
-    procedure notify(eventResult: GameEventResultT);
-    begin
-      textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
-      textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
-        + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
-
-      if eventResult.IsInitializing then
-      begin
-        Init();
-      end
-      else if eventResult.IsAdd then
-      begin
-        var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
-        m_field.SetBall(eventResult.AddToPlaceInd, ball);
-      end;
-
-      ballSelected := new BallType(P3D(0, 0, 0), m_gameLogic.Player.Who, false);
-      m_ballsToMove := m_gameLogic.BallsToMove;
-      
-      // rotTimer.Start();
-    end;
+    procedure Notify(eventResult: GameEventResultT);
 
   private
-
     procedure Init();
     begin
       m_field.Clear();
       m_addBallAction.Init();
+      m_moveBallAction.Init();
       AddMouseEvent();
-      // textDebug.Text := '' + carpetObj.Count();
-    end;
-
-    function FindNearestAvailableIndex(x, y: real) : IndexT;
-    begin
-      var indFound := EmptyIndex();
-
-      var hoverInd := m_addBallAction.GetHoveredPlace();
-      if (hoverInd <> EmptyIndex()) 
-        and (GetRay(x, y).DistanceToPoint(m_field.GetCoord(hoverInd)) <= BASE_RADIUS) then
-      begin
-        textDebug.Text := '' + ToStr(hoverInd);
-        Result := hoverInd;
-        exit;
-      end;
-
-      var nearest := real.MaxValue;
-      for var k := 0 to FHei do
-        for var i := k to FWid - k step 2 do
-          for var j := k to FWid - k step 2 do begin
-            var ind := (i, j, k);
-            var p := m_field.GetCoord(ind);
-            var isAvailable := ind in m_gameLogic.AvailablePos;
-            var isBallToMove := m_ballsToMove.Any(x -> (x[0] = ind) and (x[1].Count() > 0));
-            // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
-            // самого шара
-            if (isAvailable or isBallToMove)
-              and (GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1) then
-            begin
-              var dstToCamera := Camera.Position.Distance(p);
-              if dstToCamera < nearest then begin
-                indFound := ind;
-                nearest := dstToCamera;
-              end;
-            end;
-          end;
-
-      Result := indFound;
     end;
 
     procedure AddMouseEvent();
@@ -117,28 +53,71 @@ type
 
   // ---------------- Реализация методов ---------------- //
 
+  procedure GameViewT.Notify(eventResult: GameEventResultT);
+  begin
+    textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
+    textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
+      + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
+
+    if eventResult.IsInitializing then
+    begin
+      Init();
+    end
+    else if eventResult.IsAdd then
+    begin
+      var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
+      m_field.SetBall(eventResult.AddToPlaceInd, ball);
+    end;
+
+    textDebug.Text := '' + m_gameLogic.SquareList.Select(v -> ToStr(v)).JoinIntoString(' ');
+  end;
+
   procedure GameViewT.AddMouseEvent();
   begin
+    // _________________ Наведение (hover) ________________ //
+
     OnMouseMove += procedure (x, y: real; mb) -> begin
-      m_addBallAction.TryHover(x, y);
+      // if not m_moveBallAction.IsStepLocked then
+      // begin
+      //   var addHoverSuccess := m_addBallAction.TryHover(x, y);
+      //   if addHoverSuccess then begin
+      //     m_moveBallAction.UnHover();
+      //     exit;
+      //   end;
+      // end;
+      // m_moveBallAction.TryHover(x, y);
+
+      if not m_moveBallAction.IsStepLocked then
+      begin
+        var moveHoverSuccess := m_moveBallAction.TryHover(x, y);
+        if not moveHoverSuccess then begin
+          m_addBallAction.TryHover(x, y);
+        end
+        else
+          m_addBallAction.UnHover();
+      end
+      else
+        m_moveBallAction.TryHover(x, y);
     end;
+
+    // _________________ Выбор цели (select) ________________ //
 
     OnMouseDown += procedure(x, y, mb) -> begin
       if mb = 1 then begin
-        m_addBallAction.PlaceBall(x, y);
-      //   rotTimer.Stop();
-      //   ballSelected.Visible := false;
-      //   m_gameLogic.MakeStep(indexSelected);
+        if not m_addBallAction.TryPlaceBall(x, y) then
+          m_moveBallAction.SelectBall(x, y, true);
+      end
+      else if mb = 2 then begin
+        m_moveBallAction.ResetStep();
       end;
     end;
   end;
-
-  
 
   constructor GameViewT.Create(gameLogic: GameLogicT);
   begin
     m_gameLogic := gameLogic;
     m_addBallAction := new AddBallActionT(m_gameLogic, m_field);
+    m_moveBallAction := new MoveBallActionT(m_gameLogic, m_field);
 
     // ---- Создаём сцену ---- //
 
@@ -154,7 +133,7 @@ type
     roomModel.MoveOn(V3D(-38, -42, -5));
     roomModel.Scale(20);
 
-// ImageMaterial('res/carpet.jpg')
+    // ImageMaterial('res/carpet.jpg')
     // var mat := ImageMaterial('res/tree_texture.jpg', 10, 10);
     // carpetObj := FileModel3D(0, 0, 0, 'res/Carpet.obj', mat);
     // carpetObj.Rotate(V3D(1, 0, 0), 90);
@@ -175,7 +154,7 @@ type
     textStep := Text3D(0, baseY - 2, 0, '', 2, textColor);
     textStep.Rotate(V3D(1, 0, 0), 90);
 
-//    textDebug.Text := '' + carpetObj.Items[0].X;
+    // textDebug.Text := '' + carpetObj.Items[0].X;
 
     Invoke(()->hvp.Children.RemoveAt(1));
     Lights.AddDirectionalLight(RGB(255, 255, 255),V3D(-1,-1,-4));
@@ -195,16 +174,6 @@ type
     //   var ball := new BallType(P3D(0, 0, 0), DarkPlayer, false);
     //   darkBalls[i] := ball;
     // end;
-
-    baseVecRotation := V3D(1, 0, 0);
-    rotTimer := new Timer(30, procedure()->begin
-      ballSelected.Rotate(baseVecRotation, 1);
-      var f1 : function (): real := () -> power(random(-1.0, 1.0), 2.0);
-      baseVecRotation := Vector3D.Add( baseVecRotation, Vector3D.Create(f1(), f1(), f1()) );
-    end);
   end;
-
-
-
 
 end. // module end
