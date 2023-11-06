@@ -1,6 +1,6 @@
 unit GameLogic;
 
-uses utils;
+uses Utils;
 
 uses Cell;
 uses Index;
@@ -171,7 +171,7 @@ type
             var ballInd := ind;
             var places := new List<IndexT>();
 
-            utils.log(ToStr(ballInd) + ' ');
+            // Utils.log(ToStr(ballInd) + ' ');
             foreach square: IndexT in m_squareList do
               if (square[2] > ballInd[2]) and CanMoveBall(ballInd, square) then
                 places.Add(square);
@@ -182,7 +182,7 @@ type
         end;
       end;
     end;
-    utils.logln();
+    // Utils.logln();
 
   end;
 

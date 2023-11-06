@@ -11,7 +11,7 @@ uses FieldView;
 uses AddBallAction;
 uses MoveBallAction;
 
-uses utils;
+uses Utils;
 uses Graph3D;
 uses Ball;
 uses Timers;
@@ -104,8 +104,11 @@ type
 
     OnMouseDown += procedure(x, y, mb) -> begin
       if mb = 1 then begin
-        if not m_addBallAction.TryPlaceBall(x, y) then
-          m_moveBallAction.SelectBall(x, y, true);
+        if not m_moveBallAction.IsStepLocked then
+        begin
+          if not m_addBallAction.TryPlaceBall(x, y) then
+            m_moveBallAction.TrySelect(x, y);
+        end;
       end
       else if mb = 2 then begin
         m_moveBallAction.ResetStep();

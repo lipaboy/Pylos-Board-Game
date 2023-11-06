@@ -1,4 +1,4 @@
-unit utils;
+unit Utils;
 
 uses Graph3D;
 
@@ -24,7 +24,7 @@ uses Graph3D;
   begin
     var f := OpenWrite('logError.txt', Encoding.UTF8);
     Print(f, '');
-    f.Flush();
+    f.Close();
   end;
 
 ///////////   Geometry Extension   //////////////

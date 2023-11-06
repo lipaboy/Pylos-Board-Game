@@ -22,6 +22,7 @@ type
     m_player: PlayerEnumT;
     m_isHovered: boolean;
     m_isSelected: boolean;
+    m_isRed: boolean;
 
     m_skeleton: Group3D;
     m_whole: Group3D;
@@ -36,6 +37,20 @@ type
     property Position: Point3D read m_figure.Position write m_figure.Position := value;
     property Radius: real read m_figure.Radius;
     // property Selected: boolean read m_isHovered write SetSelected;
+
+    procedure SetRed(isRed: boolean);
+    begin
+      if (isRed <> m_isRed) then begin
+        m_isRed := isRed;
+        if isRed then begin
+          m_figure.Material := m_material + Materials.Specular(150,100) 
+            + Materials.Emissive(ARGB(100, 255, 0, 0));
+        end
+        else begin
+          m_figure.Material := m_material + Materials.Specular(150,100);
+        end;
+      end;
+    end;
 
     procedure SetHovered(isHovered: boolean);
     begin

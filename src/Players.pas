@@ -23,8 +23,11 @@ type
 		property BallsRemain: Integer read m_ballRemains write m_ballRemains := value;
 	end;
 
-function GetCellByPlayer(player: PlayerEnumT) := player = BrightPlayer ? CellT.Bright : CellT.Dark;
-function GetPlayerByCell(cell: CellT) := cell = Bright ? BrightPlayer : DarkPlayer;
-function NextPlayer(player: PlayerEnumT) := player = BrightPlayer ? DarkPlayer : BrightPlayer;
+function GetCellByPlayer(player: PlayerEnumT) 
+	:= player = PlayerEnumT.BrightPlayer ? CellT.Bright : CellT.Dark;
+function GetPlayerByCell(cell: CellT) 
+	:= cell = CellT.Bright ? PlayerEnumT.BrightPlayer : PlayerEnumT.DarkPlayer;
+function NextPlayer(player: PlayerEnumT) 
+	:= player = PlayerEnumT.BrightPlayer ? PlayerEnumT.DarkPlayer : PlayerEnumT.BrightPlayer;
 
 end.

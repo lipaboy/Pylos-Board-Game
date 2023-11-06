@@ -3,7 +3,7 @@ unit AddBallAction;
 uses Graph3D;
 
 uses Index;
-uses utils;
+uses Utils;
 uses GameLogic;
 uses GameSettings;
 uses FieldView;
@@ -67,12 +67,16 @@ type
       if GetHoveredPlace() <> EmptyIndex() then
       begin
         m_gameLogic.AddBallStep(GetHoveredPlace());
-      end;
+        UnHover();
+        Result := true;
+      end
+      else
+        Result := false;
     end;
 
     function TryHover(x, y: real): boolean;
     begin
-      var ind := FindNearestAvailableIndex(x, y);
+      var ind := FindNearestAvailablePlaceToAdd(x, y);
       Hover(ind);
       if ind <> EmptyIndex() then
       begin
@@ -83,7 +87,7 @@ type
     end;
 
   private
-    function FindNearestAvailableIndex(x, y: real) : IndexT;
+    function FindNearestAvailablePlaceToAdd(x, y: real) : IndexT;
     begin
       var indFound := EmptyIndex();
 
