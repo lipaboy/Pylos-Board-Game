@@ -73,6 +73,28 @@ type
       end;
     end;
 
+    procedure MoveBallStep(ballInd, placeInd : IndexT);
+    begin
+      if IsValid(ballInd) and (Get(ballInd) = GetCellByPlayer(Self.Player.Who))
+        and IsValid(placeInd) and (Get(placeInd) = CellT.Empty) then
+      begin
+        logln(ToStr(ballInd) + ' ' + ToStr(placeInd));
+        SetCell(placeInd, Get(ballInd));
+        SetCell(ballInd, CellT.Empty);
+
+        var eventResult: GameEventResultT;
+        eventResult.IsMove := true;
+        eventResult.MoveBallInd := ballInd;
+        eventResult.MovePlaceInd := placeInd;
+        eventResult.Who := m_currPlayer;
+
+        m_currPlayer := NextPlayer(m_currPlayer);
+
+        CalcAvailablePos();
+        NotifyAll(eventResult);
+      end;
+    end;
+
     property Player: PlayerT read m_players.Item[m_currPlayer];
     property PlayersDict: PlayersDictT read m_players;
     property AvailablePos: List<IndexT> read m_availablePos;

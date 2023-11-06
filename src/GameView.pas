@@ -67,6 +67,15 @@ type
     begin
       var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
       m_field.SetBall(eventResult.AddToPlaceInd, ball);
+    end
+    else if eventResult.IsMove then
+    begin
+      logln('GameView');
+      var ball := m_field.Get(eventResult.MoveBallInd);
+      ball.Visible := false;
+      m_field.SetBall(eventResult.MoveBallInd, nil);
+      m_field.SetBall(eventResult.MovePlaceInd, ball);
+      ball.Visible := true;
     end;
 
     textDebug.Text := '' + m_gameLogic.SquareList.Select(v -> ToStr(v)).JoinIntoString(' ');
@@ -108,7 +117,9 @@ type
         begin
           if not m_addBallAction.TryPlaceBall(x, y) then
             m_moveBallAction.TrySelect(x, y);
-        end;
+        end
+        else
+          m_moveBallAction.TrySelect(x, y);
       end
       else if mb = 2 then begin
         m_moveBallAction.ResetStep();

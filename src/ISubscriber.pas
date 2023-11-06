@@ -13,8 +13,8 @@ type
     AddToPlaceInd: IndexT;
 
     IsMove: boolean := false;
-    MoveFromInd: IndexT;
-    MoveToInd: IndexT;
+    MoveBallInd: IndexT;
+    MovePlaceInd: IndexT;
 
     IsTake: boolean := false;
     TookBalls: List<IndexT>;

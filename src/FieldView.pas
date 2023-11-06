@@ -19,8 +19,10 @@ type
     function Get(ind: IndexT) := field[ind[0], ind[1], ind[2]];
     procedure SetBall(ind: IndexT; ball: BallType);
     begin
-    	ball.Position := GetCoord(ind);
-    	ball.Visible := true;
+    	if ball <> nil then begin
+	    	ball.Position := GetCoord(ind);
+	    	ball.Visible := true;
+    	end;
     	field[ind[0], ind[1], ind[2]] := ball;
     end;
 

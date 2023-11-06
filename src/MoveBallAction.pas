@@ -131,8 +131,17 @@ type
         Result := false;
     end
     else begin  // MoveBallStateEnumT.Place
-      
-    end
+      if Self.HoveredPlace <> EmptyIndex() then begin
+        var (s, h) := (Self.SelectedBall, Self.HoveredPlace);
+        logln('reset');
+        ResetStep();
+        logln('reset');
+        m_gameLogic.MoveBallStep(s, h);
+        Result := true;
+      end
+      else
+        Result := false;
+    end;
   end;
 
   function MoveBallActionT.TryHover(x, y: real): boolean;
