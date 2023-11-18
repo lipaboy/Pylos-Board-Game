@@ -26,7 +26,9 @@ type
       m_field := field;
       m_gameLogic := gameLogic;
       m_fantomBrightBall := new BallType(P3D(0, 0, 0), PlayerEnumT.BrightPlayer, false);
+      m_fantomBrightBall.SetBlue(true);
       m_fantomDarkBall := new BallType(P3D(0, 0, 0), PlayerEnumT.DarkPlayer, false);
+      m_fantomDarkBall.SetBlue(true);
       m_currentBall := m_fantomDarkBall;
     end;
 
@@ -66,7 +68,9 @@ type
     begin
       if GetHoveredPlace() <> EmptyIndex() then
       begin
+        // logln('Before place');
         m_gameLogic.AddBallStep(GetHoveredPlace());
+        // logln('After place');
         UnHover();
         Result := true;
       end

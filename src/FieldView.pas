@@ -16,7 +16,7 @@ type
 		constructor Create();
 
     function GetCoord(ind: IndexT) := fieldCoords[ind[0], ind[1], ind[2]];
-    function Get(ind: IndexT) := field[ind[0], ind[1], ind[2]];
+    function Get(ind: IndexT) := IsValid(ind) ? field[ind[0], ind[1], ind[2]] : nil;
     procedure SetBall(ind: IndexT; ball: BallType);
     begin
     	if ball <> nil then begin

@@ -8,6 +8,11 @@ uses ISubscriber;
 uses Players;
 uses GameSettings;
 
+// Понятия:
+//
+// 1) Квадрат (square) - квадрат шаров, на котором может поместится ещё один шар так, что
+// все 4 шара снизу будут его держать с каждой из сторон.
+
 // ---------------- GameLogic ----------------- //
 
 type
@@ -23,95 +28,44 @@ type
     m_currPlayer: PlayerEnumT;
 
     m_field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
+
+    // Свободные места для добавления новых шаров
     m_availablePos := new List<IndexT>;
-    m_ballsToMove := new List<AvailableMovesT>;
+
+    // Списки свободных квадратов и шаров на поле, которые можно переместить
     m_squareList := new List<IndexT>;
+    m_ballsToMove := new List<AvailableMovesT>;
+
+    m_ballsForTake := new List<IndexT>;
 
     m_subscriberList := new List<ISubscriberT>;
 
   public
-    constructor Create();
-    begin
-    end;
-
+    constructor Create(); begin end;
     procedure Start();
-    begin
-      m_players := 
-        Arr((BrightPlayer, PlayerT.Create(BrightPlayer)),
-          (DarkPlayer, PlayerT.Create(DarkPlayer)))
-            .ToDictionary(x->x[0], x->x[1]);
 
-      for var i := 0 to FWid do 
-        for var j := 0 to FWid do 
-          for var k := 0 to FHei do 
-            m_field[i, j, k] := Empty;
-
-      m_currPlayer := BrightPlayer;
-
-      CalcAvailablePos();
-
-      var eventResult: GameEventResultT;
-      eventResult.IsInitializing := true;
-      NotifyAll(eventResult);
-    end;
-
-    procedure AddBallStep(stepInd : IndexT);
-    begin
-      if not IsEmptyIndex(stepInd) then begin
-        SetCell(stepInd, GetCellByPlayer(m_currPlayer));
-        m_players.Item[m_currPlayer].BallsRemain -= 1;
-
-        var eventResult: GameEventResultT;
-        eventResult.IsAdd := true;
-        eventResult.AddToPlaceInd := stepInd;
-        eventResult.Who := m_currPlayer;
-
-        m_currPlayer := NextPlayer(m_currPlayer);
-
-        CalcAvailablePos();
-        NotifyAll(eventResult);
-      end;
-    end;
-
+    // Изменение состояние игры (совершение хода)
+    procedure AddBallStep(placeInd : IndexT);
     procedure MoveBallStep(ballInd, placeInd : IndexT);
-    begin
-      if IsValid(ballInd) and (Get(ballInd) = GetCellByPlayer(Self.Player.Who))
-        and IsValid(placeInd) and (Get(placeInd) = CellT.Empty) then
-      begin
-        logln(ToStr(ballInd) + ' ' + ToStr(placeInd));
-        SetCell(placeInd, Get(ballInd));
-        SetCell(ballInd, CellT.Empty);
+    procedure TakeBallsStep(balls : List<IndexT>);
 
-        var eventResult: GameEventResultT;
-        eventResult.IsMove := true;
-        eventResult.MoveBallInd := ballInd;
-        eventResult.MovePlaceInd := placeInd;
-        eventResult.Who := m_currPlayer;
-
-        m_currPlayer := NextPlayer(m_currPlayer);
-
-        CalcAvailablePos();
-        NotifyAll(eventResult);
-      end;
-    end;
-
+    // Селекторы
+    function Get(ind : IndexT) := m_field[ind[0], ind[1], ind[2]];
     property Player: PlayerT read m_players.Item[m_currPlayer];
     property PlayersDict: PlayersDictT read m_players;
     property AvailablePos: List<IndexT> read m_availablePos;
     property BallsToMove: List<AvailableMovesT> read m_ballsToMove;
-    // debug
-    property SquareList: List<IndexT> read m_squareList;
+    property BallsForTake: List<IndexT> read m_ballsForTake;
 
-    function Get(ind : IndexT) : CellT;
-    begin
-      Result := m_field[ind[0], ind[1], ind[2]];
-    end;
-
+    // Подписка на события модели
     procedure Subscribe(subscriber: ISubscriberT);
-    procedure NotifyAll(eventResult: GameEventResultT);
 
   private
+    procedure NotifyAll(eventResult: GameEventResultT);
+
     procedure CalcAvailablePos();
+    procedure UpdateBallsToTake();
+    function FindSolidColorSquare(): boolean;
 
     procedure SetCell(ind : IndexT; val1 : CellT);
     begin
@@ -119,35 +73,157 @@ type
     end;
 
     function IsLockedByTopBall(index : IndexT) : boolean;
-    begin
-      var indices := | UpLeft(index), UpRight(index), DownLeft(index), DownRight(index) |;
-      foreach ind : IndexT in indices do begin
-        var topInd := Top(ind);
-        if (IsValid(topInd)) and (Get(topInd) <> Empty) then begin
-          Result := true;
-          exit;
-        end;
-      end;
-      Result := false;
-    end;
-
     function CanMoveBall(ballInd, placeInd : IndexT) : boolean;
-    begin
-      var indices := | UpLeft(placeInd), UpRight(placeInd), 
-                       DownLeft(placeInd), DownRight(placeInd) |;
-      foreach ind : IndexT in indices do begin
-        var bottomInd := Bottom(ind);
-        if bottomInd = ballInd then begin
-          Result := false;
-          exit;
-        end;
-      end;
-      Result := true;
-    end;
 
   end;
 
   // ----------- Реализация методов -------------- //
+
+  procedure GameLogicT.AddBallStep(placeInd : IndexT);
+  begin
+    if not IsEmptyIndex(placeInd) then begin
+      SetCell(placeInd, GetCellByPlayer(m_currPlayer));
+      m_players.Item[m_currPlayer].BallsRemain -= 1;
+
+      UpdateBallsToTake();
+
+      var eventResult: GameEventResultT;
+      if Self.BallsForTake.Any() then begin
+        eventResult.IsNeedToTake := true;
+        eventResult.Who := m_currPlayer;
+      end;
+
+      eventResult.IsAdd := true;
+      eventResult.AddToPlaceInd := placeInd;
+      eventResult.Who := m_currPlayer;
+
+      if not eventResult.IsNeedToTake then
+        m_currPlayer := NextPlayer(m_currPlayer);
+
+      CalcAvailablePos();
+      NotifyAll(eventResult);
+    end;
+  end;
+
+  procedure GameLogicT.MoveBallStep(ballInd, placeInd : IndexT);
+  begin
+    if IsValid(ballInd) and (Get(ballInd) = GetCellByPlayer(Self.Player.Who))
+      and IsValid(placeInd) and (Get(placeInd) = CellT.Empty) then
+    begin
+      SetCell(placeInd, Get(ballInd));
+      SetCell(ballInd, CellT.Empty);
+
+      UpdateBallsToTake();
+
+      var eventResult: GameEventResultT;
+      if Self.BallsForTake.Any() then begin
+        eventResult.IsNeedToTake := true;
+        eventResult.Who := m_currPlayer;
+      end;
+
+      eventResult.IsMove := true;
+      eventResult.MoveBallInd := ballInd;
+      eventResult.MovePlaceInd := placeInd;
+      eventResult.Who := m_currPlayer;
+
+      m_currPlayer := NextPlayer(m_currPlayer);
+
+      CalcAvailablePos();
+      NotifyAll(eventResult);
+    end;
+  end;
+
+  procedure GameLogicT.TakeBallsStep(balls : List<IndexT>);
+  begin
+    foreach var ballInd: IndexT in balls do
+      SetCell(ballInd, CellT.Empty);
+    m_players.Item[m_currPlayer].BallsRemain += balls.Count();
+
+    m_ballsForTake.Clear();
+
+    var eventResult: GameEventResultT;
+    eventResult.IsTaken := true;
+    eventResult.BallsTaken := balls;
+    eventResult.Who := m_currPlayer;
+
+    m_currPlayer := NextPlayer(m_currPlayer);
+    CalcAvailablePos();
+    NotifyAll(eventResult);
+  end;
+
+  procedure GameLogicT.UpdateBallsToTake();
+  begin
+    if not FindSolidColorSquare() then begin
+      m_ballsForTake.Clear();
+    end
+    else begin
+      for var k := 0 to FHei - 1 do
+        for var i := k to FWid step 2 do
+          for var j := k to FWid step 2 do begin
+            var ind := (i, j, k);
+            if (Get(ind) = GetCellByPlayer(Self.Player.Who)) 
+              and (not IsLockedByTopBall(ind)) then
+            begin
+              m_ballsForTake.Add(ind);
+            end;
+          end;
+    end;
+  end;
+
+  function GameLogicT.FindSolidColorSquare(): boolean;
+  begin
+    for var k := FHei downto 1 do begin
+      for var i := k to FWid - k step 2 do begin
+        for var j := k to FWid - k step 2 do begin
+          // вершина квадрата (позиция, которая находится над квадратом из шаров)
+          var ind := (i, j, k);
+          if (Get(ind) = Empty) then begin
+            var uniqueCells :=
+              | Get(UpLeft(Bottom(ind))),
+                Get(UpRight(Bottom(ind))),
+                Get(DownRight(Bottom(ind))),
+                Get(DownLeft(Bottom(ind))) |.Distinct;
+
+            if (uniqueCells.Count = 1) 
+              and (GetCellByPlayer(Self.Player.Who) in uniqueCells) then
+            begin
+              Result := true;
+              exit;
+            end;
+          end;
+        end;
+      end;
+    end;
+    logln('solid');
+    Result := false;
+  end;
+
+  function GameLogicT.IsLockedByTopBall(index : IndexT) : boolean;
+  begin
+    var indices := | UpLeft(index), UpRight(index), DownLeft(index), DownRight(index) |;
+    foreach ind : IndexT in indices do begin
+      var topInd := Top(ind);
+      if (IsValid(topInd)) and (Get(topInd) <> Empty) then begin
+        Result := true;
+        exit;
+      end;
+    end;
+    Result := false;
+  end;
+
+  function GameLogicT.CanMoveBall(ballInd, placeInd : IndexT) : boolean;
+  begin
+    var indices := | UpLeft(placeInd), UpRight(placeInd), 
+                     DownLeft(placeInd), DownRight(placeInd) |;
+    foreach ind : IndexT in indices do begin
+      var bottomInd := Bottom(ind);
+      if bottomInd = ballInd then begin
+        Result := false;
+        exit;
+      end;
+    end;
+    Result := true;
+  end;
 
   procedure GameLogicT.CalcAvailablePos();
   begin
@@ -193,7 +269,6 @@ type
             var ballInd := ind;
             var places := new List<IndexT>();
 
-            // Utils.log(ToStr(ballInd) + ' ');
             foreach square: IndexT in m_squareList do
               if (square[2] > ballInd[2]) and CanMoveBall(ballInd, square) then
                 places.Add(square);
@@ -204,8 +279,27 @@ type
         end;
       end;
     end;
-    // Utils.logln();
+  end;
 
+  procedure GameLogicT.Start();
+  begin
+    m_players := 
+      Arr((BrightPlayer, PlayerT.Create(BrightPlayer)),
+        (DarkPlayer, PlayerT.Create(DarkPlayer)))
+          .ToDictionary(x->x[0], x->x[1]);
+
+    for var i := 0 to FWid do 
+      for var j := 0 to FWid do 
+        for var k := 0 to FHei do 
+          m_field[i, j, k] := Empty;
+
+    m_currPlayer := BrightPlayer;
+
+    CalcAvailablePos();
+
+    var eventResult: GameEventResultT;
+    eventResult.IsInitializing := true;
+    NotifyAll(eventResult);
   end;
 
   procedure GameLogicT.Subscribe(subscriber: ISubscriberT);

@@ -1,9 +1,16 @@
 ﻿uses Controller;
 uses Utils;
+uses Controls, Graph3D;
 
 begin 
   try
     clearLogFile();
+
+    Window.Title := 'Pylos Game';
+
+    // LeftPanel(150,Colors.Orange);
+    // var b := new ButtonWPF('Создать шар');
+
     var gameInstance := new ControllerT();
     gameInstance.StartGame();
   except

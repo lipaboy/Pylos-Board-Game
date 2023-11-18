@@ -1,7 +1,5 @@
-**/LibSource
 **/*.pdb
-**/main.exe
-**/Pylos.exe
+**/*.exe
 **/*.pcu
 **/*.opt
 **/logError.txt

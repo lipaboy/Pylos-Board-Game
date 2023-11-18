@@ -16,8 +16,11 @@ type
     MoveBallInd: IndexT;
     MovePlaceInd: IndexT;
 
-    IsTake: boolean := false;
-    TookBalls: List<IndexT>;
+    // состояние, при котором нужно взять шарики
+    IsNeedToTake: boolean := false;
+    // событие взятия шаров и каких конкретно
+    IsTaken: boolean := false;
+    BallsTaken: List<IndexT>;
   end;
 
 type
