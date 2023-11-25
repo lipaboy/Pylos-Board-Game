@@ -35,7 +35,9 @@ type
 
     textDebug : TextT;
     textBallCount : TextT;
+
     textStep : TextT;
+    m_ballStepIndicator : BallType;
 
   public
     constructor Create(gameLogic: GameLogicT);
@@ -141,7 +143,11 @@ type
           m_moveBallAction.TrySelect(x, y);
       end
       else if mb = 2 then begin
-        m_moveBallAction.ResetStep();
+        if m_takeBallAction.IsActionOn then begin
+          m_takeBallAction.ResetStep();
+        end
+        else
+          m_moveBallAction.ResetStep();
       end;
     end;
   end;

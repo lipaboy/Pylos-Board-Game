@@ -2,29 +2,35 @@ unit Utils;
 
 uses Graph3D;
 
-///////////   Debug   //////////////
+// {$undef DEBUG}
+
+/////////////   Debug   //////////////
 
   procedure logln(message: string := '');
   begin
-    var f := OpenAppend('logError.txt', Encoding.UTF8);
-    Println(f, message);
-    f.Close();
-    // Println(message);
+    {$ifdef DEBUG}
+      var f := OpenAppend('log.txt', Encoding.UTF8);
+      Println(f, message);
+      f.Close();
+    {$endif}
   end;
 
   procedure log(message: string);
   begin
-    var f := OpenAppend('logError.txt', Encoding.UTF8);
-    Print(f, message);
-    f.Close();
-    // Print(message);
+    {$ifdef DEBUG}
+      var f := OpenAppend('log.txt', Encoding.UTF8);
+      Print(f, message);
+      f.Close();
+    {$endif}
   end;
 
   procedure clearLogFile();
   begin
-    var f := OpenWrite('logError.txt', Encoding.UTF8);
-    Print(f, '');
-    f.Close();
+    {$ifdef DEBUG}
+      var f := OpenWrite('log.txt', Encoding.UTF8);
+      Print(f, '');
+      f.Close();
+    {$endif}
   end;
 
 ///////////   Geometry Extension   //////////////

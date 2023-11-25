@@ -37,6 +37,54 @@ type
     property HoveredBall: IndexT read m_hoverBall;
     property IsActionOn: boolean read m_isActionOn write m_isActionOn := value;
 
+    function TryHover(x, y: real): boolean;
+    begin
+      if not m_isActionOn then
+        exit;
+        
+      var ind := FindNearestBallForTake(x, y);
+      Hover(ind);
+      if ind <> EmptyIndex() then
+      begin
+        Result := true;
+      end
+      else
+        Result := false;
+    end;
+
+    function TrySelect(): boolean;
+    begin
+      if (Self.HoveredBall = EmptyIndex())
+        or m_selectedBalls.Contains(Self.HoveredBall) then 
+      begin
+        Result := false;
+        exit;
+      end;
+
+      var ind := Self.HoveredBall;
+      m_selectedBalls.Add(ind);
+      if (m_selectedBalls.Count() >= 2) or (m_gameLogic.BallsForTake.Count() <= 1) then
+      begin
+        var balls := m_selectedBalls.ToList();
+        log('select ');
+        foreach b : IndexT in balls do begin
+          logln(ToStr(b));
+        end;
+        Deselect();
+        UnHover();
+        m_gameLogic.TakeBallsStep(balls);
+      end;
+    end;
+
+    procedure ResetStep();
+    begin
+      foreach ballInd : IndexT in m_selectedBalls do begin
+        m_field.Get(ballInd).SetYellow(false);
+      end;
+      Deselect();
+      UnHover();
+    end;
+
   private
     procedure Hover(ballInd: IndexT);
     begin
@@ -59,45 +107,6 @@ type
     procedure UnHover() := Hover(EmptyIndex());
     procedure Deselect() := m_selectedBalls.Clear();
 
-  public
-    function TryHover(x, y: real): boolean;
-    begin
-      if not m_isActionOn then
-        exit;
-        
-      var ind := FindNearestBallForTake(x, y);
-      Hover(ind);
-      if ind <> EmptyIndex() then
-      begin
-        Result := true;
-      end
-      else
-        Result := false;
-    end;
-
-    function TrySelect(): boolean;
-    begin
-      if Self.HoveredBall = EmptyIndex() then begin
-        Result := false;
-        exit;
-      end;
-
-      var ind := Self.HoveredBall;
-      m_selectedBalls.Add(ind);
-      if (m_selectedBalls.Count() >= 2) or (m_gameLogic.BallsForTake.Count() <= 1) then
-      begin
-        var balls := m_selectedBalls.ToList();
-        log('select ');
-        foreach b : IndexT in balls do begin
-          logln(ToStr(b));
-        end;
-        Deselect();
-        UnHover();
-        m_gameLogic.TakeBallsStep(balls);
-      end;
-    end;
-
-  private
     function FindNearestBallForTake(x, y: real) : IndexT;
     begin
       var indFound := EmptyIndex();

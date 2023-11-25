@@ -2,4 +2,4 @@
 **/*.exe
 **/*.pcu
 **/*.opt
-**/logError.txt
+**/log.txt

@@ -85,7 +85,8 @@ type
       SetCell(placeInd, GetCellByPlayer(m_currPlayer));
       m_players.Item[m_currPlayer].BallsRemain -= 1;
 
-      UpdateBallsToTake();
+      if m_players[NextPlayer(m_currPlayer)].BallsRemain > 0 then
+        UpdateBallsToTake();
 
       var eventResult: GameEventResultT;
       if Self.BallsForTake.Any() then begin
@@ -97,8 +98,11 @@ type
       eventResult.AddToPlaceInd := placeInd;
       eventResult.Who := m_currPlayer;
 
-      if not eventResult.IsNeedToTake then
+      if (not eventResult.IsNeedToTake) and 
+        (m_players[NextPlayer(m_currPlayer)].BallsRemain > 0) then
+      begin
         m_currPlayer := NextPlayer(m_currPlayer);
+      end;
 
       CalcAvailablePos();
       NotifyAll(eventResult);
@@ -113,7 +117,8 @@ type
       SetCell(placeInd, Get(ballInd));
       SetCell(ballInd, CellT.Empty);
 
-      UpdateBallsToTake();
+      if m_players[NextPlayer(m_currPlayer)].BallsRemain > 0 then
+        UpdateBallsToTake();
 
       var eventResult: GameEventResultT;
       if Self.BallsForTake.Any() then begin
@@ -126,7 +131,11 @@ type
       eventResult.MovePlaceInd := placeInd;
       eventResult.Who := m_currPlayer;
 
-      m_currPlayer := NextPlayer(m_currPlayer);
+      if (not eventResult.IsNeedToTake) and 
+        (m_players[NextPlayer(m_currPlayer)].BallsRemain > 0) then
+      begin
+        m_currPlayer := NextPlayer(m_currPlayer);
+      end;
 
       CalcAvailablePos();
       NotifyAll(eventResult);
