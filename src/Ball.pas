@@ -27,9 +27,6 @@ type
     m_isBlue := false;
     m_stateDict := new Dictionary<string, boolean>;
 
-    m_skeleton: Group3D;
-    m_whole: Group3D;
-
     rotTimer : Timer;
     m_baseVecRotation: Vector3D;
 
@@ -39,6 +36,8 @@ type
     property Visible: boolean read m_figure.Visible write m_figure.Visible := value;
     property Position: Point3D read m_figure.Position write m_figure.Position := value;
     property Radius: real read m_figure.Radius;
+    property Player: PlayerEnumT read m_player;
+    property Figure: SphereT read m_figure;
     // property Selected: boolean read m_isHovered write SetSelected;
 
     procedure Rotate(asix: Vector3D; angle: real);

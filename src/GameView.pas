@@ -8,6 +8,8 @@ uses GameLogic;
 uses GameSettings;
 
 uses FieldView;
+uses SwitchingBall;
+
 uses AddBallAction;
 uses MoveBallAction;
 uses TakeBallAction;
@@ -37,7 +39,7 @@ type
     textBallCount : TextT;
 
     textStep : TextT;
-    m_ballStepIndicator : BallType;
+    m_stepIndicator : SwitchingBallT;
 
   public
     constructor Create(gameLogic: GameLogicT);
@@ -63,11 +65,15 @@ type
   procedure GameViewT.Notify(eventResult: GameEventResultT);
   begin
     textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
+    if m_stepIndicator.Current <> m_gameLogic.Player.Who then
+      m_stepIndicator.SetBall(m_gameLogic.Player.Who);
+
     textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
       + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
 
     if eventResult.IsInitializing then begin
       Init();
+      m_stepIndicator.SetBall(m_gameLogic.Player.Who);
 
       // Debug
       var kek : procedure(x, y: real; mousebutton: integer) := OnMouseMove;
@@ -178,12 +184,17 @@ type
     
     var baseY := -12.5;
     var textColor := Colors.Brown;
-    textDebug := Text3D(0, baseY - 4, 0, '',2, textColor);
+    textDebug := Text3D(0, baseY - 4, 0, '', 2, textColor);
     textDebug.Rotate(V3D(1, 0, 0), 90);
-    textBallCount := Text3D(0, baseY, 0, '', 2, textColor);
-    textBallCount.Rotate(V3D(1, 0, 0), 90);
     textStep := Text3D(0, baseY - 2, 0, '', 2, textColor);
     textStep.Rotate(V3D(1, 0, 0), 90);
+    textBallCount := Text3D(0, baseY, 0, '', 2, textColor);
+    textBallCount.Rotate(V3D(1, 0, 0), 90);
+
+    var pIndicator := P3D(11, baseY, BASE_RADIUS);
+    m_stepIndicator := new SwitchingBallT(pIndicator, pIndicator);
+    m_stepIndicator.Dark.Figure.Scale(1.2);
+    m_stepIndicator.Bright.Figure.Scale(1.2);
 
     lampObj := FileModel3D(14, -5, -1, 'res/Lamp.obj', Materials.Specular(100, 100) );
     lampObj.Rotate(V3D(1, 0, 0), 90);
