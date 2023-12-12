@@ -28,7 +28,9 @@ type
           Key.S : Camera.AddDownForce();
           Key.A : Camera.AddLeftForce();
           Key.D : Camera.AddRightForce();
-          // Key.Q : Camera.Rotate(V3D(0, 0, 1), 10);
+          Key.E : Camera.AddForwardForce();
+          Key.Q : Camera.AddBackwardForce();
+          Key.Escape: OnClose();
         end;
       end;
     end;

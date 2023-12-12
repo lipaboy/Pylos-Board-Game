@@ -59,5 +59,15 @@ uses Graph3D;
     var lineNormal := Vector3D.CrossProduct(normal, Self.Direction);
     Result := point.Distance(Self.LineIntersection(Ray(point, lineNormal)));
   end;
+
+  function ToPoint(Self: Vector3D) : Point3D; extensionmethod;
+  begin
+    Result := P3D(Self.X, Self.Y, Self.Z);
+  end;
+
+  function op_Addition(Self: Point3D; other: Point3D): Point3D; extensionmethod;
+  begin
+    Result := P3D(Self.X + other.X, Self.Y + other.Y, Self.Z + other.Z);
+  end;
   
 end.

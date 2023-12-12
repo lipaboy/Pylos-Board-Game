@@ -68,9 +68,7 @@ type
     begin
       if GetHoveredPlace() <> EmptyIndex() then
       begin
-        // logln('Before place');
         m_gameLogic.AddBallStep(GetHoveredPlace());
-        // logln('After place');
         UnHover();
         Result := true;
       end

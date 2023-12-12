@@ -133,9 +133,7 @@ type
     else begin  // MoveBallStateEnumT.Place
       if Self.HoveredPlace <> EmptyIndex() then begin
         var (s, h) := (Self.SelectedBall, Self.HoveredPlace);
-        logln('reset');
         ResetStep();
-        logln('reset');
         m_gameLogic.MoveBallStep(s, h);
         Result := true;
       end

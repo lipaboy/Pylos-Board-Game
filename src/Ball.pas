@@ -11,7 +11,7 @@ uses Timers;
 
 // TODO: move into BallType class
 const
-	BASE_RADIUS = 1.1;
+	BASE_RADIUS = 1.0;
 
 type
   BallType = class
@@ -153,6 +153,7 @@ type
 
     if m_player = PlayerEnumT.BrightPlayer then begin
       m_material := ImageMaterial('res/tree_texture.jpg');
+      m_figure.Rotate(V3D(0, 0, 1), 180);
     end
     else begin
       m_material := ImageMaterial('res/tree_texture_dark.jpg');

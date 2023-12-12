@@ -24,7 +24,7 @@ type
   private
     m_gameLogic: GameLogicT := nil;
 
-    m_field := new FieldViewT();
+    m_field : FieldViewT;
     m_addBallAction: AddBallActionT;
     m_moveBallAction: MoveBallActionT;
     m_takeBallAction: TakeBallActionT;
@@ -76,15 +76,15 @@ type
       m_stepIndicator.SetBall(m_gameLogic.Player.Who);
 
       // Debug
-      var kek : procedure(x, y: real; mousebutton: integer) := OnMouseMove;
-      OnMouseMove := procedure (x,y,m) -> begin end;
+      // var kek : procedure(x, y: real; mousebutton: integer) := OnMouseMove;
+      // OnMouseMove := procedure (x,y,m) -> begin end;
       // m_addBallAction.Hover((0, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
       // m_addBallAction.Hover((4, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
       // m_addBallAction.Hover((2, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
       // m_addBallAction.Hover((6, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
       // m_addBallAction.Hover((0, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
       // m_addBallAction.Hover((4, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      OnMouseMove := kek;
+      // OnMouseMove := kek;
     end
     else if eventResult.IsAdd then begin
       var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
@@ -106,15 +106,16 @@ type
       m_takeBallAction.IsActionOn := false;
     end;
     
-    logln('gameview');
     if eventResult.IsNeedToTake then begin
       m_takeBallAction.IsActionOn := true;
     end;
+
+    logln('INFO: GameView: Processed the GameLogic notification');
   end;
 
   procedure GameViewT.AddMouseEvent();
   begin
-    // _________________ Наведение (hover) ________________ //
+    // -------- Наведение (hover) -------- //
 
     OnMouseMove += procedure (x, y: real; mb) -> begin
       if m_takeBallAction.IsActionOn then begin
@@ -133,7 +134,7 @@ type
       end;
     end;
 
-    // _________________ Выбор цели (select) ________________ //
+    // -------- Выбор цели (select) -------- //
 
     OnMouseDown += procedure(x, y, mb) -> begin
       if mb = 1 then begin
@@ -158,12 +159,11 @@ type
     end;
   end;
 
+  // _________________ Реализация методов ________________ //
+
   constructor GameViewT.Create(gameLogic: GameLogicT);
   begin
     m_gameLogic := gameLogic;
-    m_addBallAction := new AddBallActionT(m_gameLogic, m_field);
-    m_moveBallAction := new MoveBallActionT(m_gameLogic, m_field);
-    m_takeBallAction := new TakeBallActionT(m_gameLogic, m_field);
 
     // ---- Создаём сцену ---- //
 
@@ -174,13 +174,25 @@ type
       Materials.Diffuse(RGB(110,  51,  26)) 
         + Materials.Specular(100, 100) + Materials.Emissive(GrayColor(0));
 
+    // Комната
     roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', boardMaterial);
     roomModel.Rotate(V3D(1, 0, 0), 90);
     roomModel.MoveOn(V3D(-38, -42, -5));
     roomModel.Scale(20);
 
-    boardModel := FileModel3D(0, 0, 0, 'res/pylos_board.obj', boardMaterial);
+    // Доска
+    var centerPos := P3D(0, 0, 0);
+
+    boardModel := FileModel3D(centerPos, 'res/pylos_board.obj', boardMaterial);
     boardModel.Scale(0.2);
+
+    // Поле с шарами
+    m_field := new FieldViewT(centerPos);
+    
+    // Обработка событий
+    m_addBallAction := new AddBallActionT(m_gameLogic, m_field);
+    m_moveBallAction := new MoveBallActionT(m_gameLogic, m_field);
+    m_takeBallAction := new TakeBallActionT(m_gameLogic, m_field);
     
     var baseY := -12.5;
     var textColor := Colors.Brown;
@@ -193,8 +205,8 @@ type
 
     var pIndicator := P3D(11, baseY, BASE_RADIUS);
     m_stepIndicator := new SwitchingBallT(pIndicator, pIndicator);
-    m_stepIndicator.Dark.Figure.Scale(1.2);
-    m_stepIndicator.Bright.Figure.Scale(1.2);
+    // m_stepIndicator.Dark.Figure.Scale(1.1);
+    // m_stepIndicator.Bright.Figure.Scale(1.1);
 
     lampObj := FileModel3D(14, -5, -1, 'res/Lamp.obj', Materials.Specular(100, 100) );
     lampObj.Rotate(V3D(1, 0, 0), 90);
@@ -232,19 +244,6 @@ type
     // Lights.AddDirectionalLight(RGB(0, 255, 0),V3D(-1,1,-4));
     // Lights.AddDirectionalLight(RGB(0, 0, 255),V3D(1,-1,-4));
 
-    // ---- Создаём шары ---- //
-
-    // for var i := 0 to brightBalls.Length - 1 do begin
-    //   var ball := new BallType(P3D(0, 0, 0), BrightPlayer, false);
-    //   // var (ex, ey) := (random(2), random(2));
-    //   // ball.Rotate(V3D(ex, ey, random(2) + (ex + ey = 0 ? 1  : 0)), random(360));
-    //   brightBalls[i] := ball;
-    // end;
-
-    // for var i := 0 to darkBalls.Length - 1 do begin
-    //   var ball := new BallType(P3D(0, 0, 0), DarkPlayer, false);
-    //   darkBalls[i] := ball;
-    // end;
   end;
 
 end. // module end

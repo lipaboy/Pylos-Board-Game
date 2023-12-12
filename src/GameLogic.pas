@@ -203,7 +203,7 @@ type
         end;
       end;
     end;
-    logln('solid');
+    logln('INFO: GameLogic: No found solid color square.');
     Result := false;
   end;
 
