@@ -1,6 +1,8 @@
 import subprocess
+import os
 
 subprocess.run(["python", "compile.py"], shell = True)
-subprocess.run(".//main.exe")
+os.chdir('./build')
+subprocess.run("./PylosGame.exe")
 
 # Воспроизведение звукового файла по завершении обратного отсчета
