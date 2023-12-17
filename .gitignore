@@ -4,3 +4,4 @@
 **/*.opt
 **/log.txt
 **/*.ico
+build
