@@ -6,7 +6,7 @@ begin
   try
     clearLogFile();
 
-    Window.Title := 'Pylos Game';
+    Window.Title := 'Pylos Game v.2';
 
     // LeftPanel(150,Colors.Orange);
     // var b := new ButtonWPF('Создать шар');
