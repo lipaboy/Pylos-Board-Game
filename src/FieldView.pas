@@ -8,20 +8,25 @@ uses Utils;
 
 uses Graph3D;
 
+
+type PlayerBallArrT = array[0..PLAYER_BALL_COUNT-1] of BallType;
+
 type
 	FieldViewT = class
 	private
     fieldCoords: array[0..FWid, 0..FWid, 0..FHei] of Point3D;
     field: array[0..FWid, 0..FWid, 0..FHei] of BallType;
 
-    m_brightBalls: array[0..PLAYER_BALL_COUNT-1] of BallType;
-    m_darkBalls: array[0..PLAYER_BALL_COUNT-1] of BallType;
+    m_brightBalls: PlayerBallArrT;
+    m_darkBalls: PlayerBallArrT;
 
 	public
 		constructor Create(centerPos: Point3D);
 
-    property BrightBalls: read m_brightBalls;
-    property DarkBalls: read m_darkBalls;
+    // Warning: возможно тут происходит копирование массива целиком. 
+    // Узкое место: вызов метода в AddBallAction при Hover event.
+    property BrightBalls: PlayerBallArrT read m_brightBalls;
+    property DarkBalls: PlayerBallArrT read m_darkBalls;
 
     function GetCoord(ind: IndexT) := IsValid(ind) 
       ? fieldCoords[ind[0], ind[1], ind[2]] : P3D(0, 0, 0);
