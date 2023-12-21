@@ -2,8 +2,10 @@
 
 uses Index;
 uses Cell;
+uses GameEventResult;
 uses ISubscriber;
 uses Players;
+uses PlayerEnum;
 uses GameLogic;
 uses GameSettings;
 
@@ -64,10 +66,15 @@ type
 
   procedure GameViewT.Notify(eventResult: GameEventResultT);
   begin
-    textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
-    if m_stepIndicator.Current <> m_gameLogic.Player.Who then
-      m_stepIndicator.SetBall(m_gameLogic.Player.Who);
-
+    if eventResult.IsGameOver then begin
+      textStep.Text := 'Партию затащил ' + m_gameLogic.Player.Name + ' игрок';
+      m_stepIndicator.Hide();
+    end
+    else begin
+      textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
+      if m_stepIndicator.Current <> m_gameLogic.Player.Who then
+        m_stepIndicator.SetBall(m_gameLogic.Player.Who);
+    end;
     textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
       + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
 

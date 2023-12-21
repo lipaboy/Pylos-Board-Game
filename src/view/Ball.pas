@@ -1,6 +1,7 @@
 unit Ball;
 
 uses Players;
+uses PlayerEnum;
 uses GameSettings;
 uses GameLogic;
 uses Graph3D;

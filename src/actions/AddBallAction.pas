@@ -9,6 +9,7 @@ uses GameSettings;
 uses FieldView;
 uses Ball;
 uses Players;
+uses PlayerEnum;
 
 type
   AddBallActionT = class

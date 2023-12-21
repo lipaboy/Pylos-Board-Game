@@ -1,19 +1,24 @@
 unit Controller;
 
+uses Graph3D;
+
+uses Utils;
 uses GameLogic;
 uses GameView;
-uses Graph3D;
+uses AutoPlayGame;
 
 type
   ControllerT = class
   private
     gameLogicInstance: GameLogicT;
     gameViewInstance: GameViewT;
+    autoPlayGameInstance: AutoPlayGameT;
   public
     constructor Create();
     begin
       gameLogicInstance := new GameLogicT();
       gameViewInstance := new GameViewT(gameLogicInstance);
+      autoPlayGameInstance := new AutoPlayGameT(gameLogicInstance);
 
       gameLogicInstance.Subscribe(gameViewInstance);
 
@@ -36,6 +41,8 @@ type
     procedure StartGame();
     begin
       gameLogicInstance.Start();
+      if IS_AUTO_PLAY_MODE_ON then
+        autoPlayGameInstance.Play();
     end;
   end;
 
