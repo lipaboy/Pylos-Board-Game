@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shutil
+import sys
 
 # TODO: удалять файлы из src_dump, которых уже нет в проекте
 
@@ -24,21 +25,10 @@ def compileTheFile(fileName: str):
         return True
     return False
 
-    # process = subprocess.Popen([compilerPath, fileName, 'OutDir=./build/'], \
-    #     text=True, stdout=subprocess.PIPE)
-    # isLastLine = True
-    # while True:
-    #     line = process.stdout.readline()
-    #     print(line, end="")
-    #     if not line:
-    #         key = input()
-    #     if isLastLine:
-    #         return False
-    #     if 'Компилирую сборку' in line:
-    #         isLastLine = True
-
 if compileTheFile("./build/src_dump/main.pas"):
     shutil.move('./build/src_dump/main.exe', './build/PylosGame.exe')
     shutil.move('./build/src_dump/main.pdb', './build/PylosGame.pdb')
+    sys.exit(0)
 else:
     print('Произошли ошибки во время компиляции.')
+    sys.exit(1)

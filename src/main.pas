@@ -11,7 +11,7 @@ begin
     // LeftPanel(150,Colors.Orange);
     // var b := new ButtonWPF('Создать шар');
 
-    var gameInstance := new ControllerT();
+    var gameInstance := new ControllerT(() -> Window.Close());
     gameInstance.StartGame();
   except
     on e: System.IndexOutOfRangeException do

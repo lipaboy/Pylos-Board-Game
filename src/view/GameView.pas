@@ -21,6 +21,8 @@ uses Graph3D;
 uses Ball;
 uses Timers;
 
+uses SoundPlayer;
+
 type
   GameViewT = class(ISubscriberT)
   private
@@ -67,7 +69,9 @@ type
   procedure GameViewT.Notify(eventResult: GameEventResultT);
   begin
     if eventResult.IsGameOver then begin
-      textStep.Text := 'Партию затащил ' + m_gameLogic.Player.Name + ' игрок';
+      textStep.Text := m_gameLogic.Player.Who = PlayerEnumT.BrightPlayer ? 
+        'Забрал инициативу Светлый игрок'
+        : 'Преимущество защитил Тёмный игрок';
       m_stepIndicator.Hide();
     end
     else begin
@@ -81,21 +85,14 @@ type
     if eventResult.IsInitializing then begin
       Init();
       m_stepIndicator.SetBall(m_gameLogic.Player.Who);
-
-      // Debug
-      var kek : procedure(x, y: real; mousebutton: integer) := OnMouseMove;
-      OnMouseMove := procedure (x,y,m) -> begin end;
-      // m_addBallAction.Hover((0, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((4, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((2, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((6, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((0, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((4, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      OnMouseMove := kek;
     end
     else if eventResult.IsAdd then begin
       var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
       m_field.SetBall(eventResult.AddToPlaceInd, ball);
+      
+      logln('GameView: Add ball');
+
+      SoundHandlerT.GetSoundPlayer().PlayKnock();
     end
     else if eventResult.IsMove then begin
       var ball := m_field.Get(eventResult.MoveBallInd);
@@ -113,7 +110,8 @@ type
       m_takeBallAction.IsActionOn := false;
     end;
     
-    logln('gameview');
+    logln('GameView: method Notify');
+
     if eventResult.IsNeedToTake then begin
       m_takeBallAction.IsActionOn := true;
     end;
