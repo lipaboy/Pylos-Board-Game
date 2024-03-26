@@ -2,7 +2,7 @@ unit Utils;
 
 uses Graph3D;
 
-{$undef DEBUG}
+// {$undef DEBUG}
 // {$define AUTO_PLAY}
 
 const

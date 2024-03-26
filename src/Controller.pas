@@ -13,8 +13,11 @@ type
     gameLogicInstance: GameLogicT;
     gameViewInstance: GameViewT;
     autoPlayGameInstance: AutoPlayGameT;
+
+    isControlPressed := False;
+
   public
-    constructor Create();
+    constructor Create(quitEvent: () -> ());
     begin
       gameLogicInstance := new GameLogicT();
       gameViewInstance := new GameViewT(gameLogicInstance);
@@ -34,6 +37,15 @@ type
           Key.A : Camera.AddLeftForce();
           Key.D : Camera.AddRightForce();
           // Key.Q : Camera.Rotate(V3D(0, 0, 1), 10);
+
+          Key.LeftCtrl: isControlPressed := True;
+          Key.Q : if isControlPressed then quitEvent();
+        end;
+      end;
+
+      OnKeyUp += procedure(k: Key) -> begin
+        case k of
+          Key.LeftCtrl: isControlPressed := False;
         end;
       end;
     end;
