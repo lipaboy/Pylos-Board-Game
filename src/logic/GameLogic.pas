@@ -4,9 +4,11 @@ uses Utils;
 
 uses Cell;
 uses Index;
+uses GameEventResult;
 uses ISubscriber;
 uses Players;
 uses GameSettings;
+uses PlayerEnum;
 
 // Понятия:
 //
@@ -26,6 +28,7 @@ type
   private
     m_players : PlayersDictT;
     m_currPlayer: PlayerEnumT;
+    m_isStarted := false;
 
     m_field: array[0..FWid, 0..FWid, 0..FHei] of CellT;
 
@@ -36,6 +39,7 @@ type
     m_squareList := new List<IndexT>;
     m_ballsToMove := new List<AvailableMovesT>;
 
+    // Список шаров, которые можно взять с поля
     m_ballsForTake := new List<IndexT>;
 
     m_subscriberList := new List<ISubscriberT>;
@@ -56,12 +60,17 @@ type
     property AvailablePos: List<IndexT> read m_availablePos;
     property BallsToMove: List<AvailableMovesT> read m_ballsToMove;
     property BallsForTake: List<IndexT> read m_ballsForTake;
+    property IsStarted: boolean read m_isStarted;
 
     // Подписка на события модели
     procedure Subscribe(subscriber: ISubscriberT);
+    procedure UnSubscribe(subscriber: ISubscriberT);
 
   private
     procedure NotifyAll(eventResult: GameEventResultT);
+
+    function IsEnded() := m_players.All(p -> p.Value.BallsRemain <= 0);
+    procedure EndGame() := m_isStarted := false;
 
     procedure CalcAvailablePos();
     procedure UpdateBallsToTake();
@@ -103,6 +112,9 @@ type
       begin
         m_currPlayer := NextPlayer(m_currPlayer);
       end;
+
+      if IsEnded() then
+        eventResult.IsGameOver := true;
 
       CalcAvailablePos();
       NotifyAll(eventResult);
@@ -292,6 +304,7 @@ type
 
   procedure GameLogicT.Start();
   begin
+    m_isStarted := false;
     m_players := 
       Arr((BrightPlayer, PlayerT.Create(BrightPlayer)),
         (DarkPlayer, PlayerT.Create(DarkPlayer)))
@@ -309,11 +322,19 @@ type
     var eventResult: GameEventResultT;
     eventResult.IsInitializing := true;
     NotifyAll(eventResult);
+    m_isStarted := true;
   end;
+
+  // ---------------- ISubscriber Notification ---------------- //
 
   procedure GameLogicT.Subscribe(subscriber: ISubscriberT);
   begin
     m_subscriberList.Add(subscriber);
+  end;
+
+  procedure GameLogicT.UnSubscribe(subscriber: ISubscriberT);
+  begin
+    m_subscriberList.Remove(subscriber);
   end;
 
   procedure GameLogicT.NotifyAll(eventResult: GameEventResultT);

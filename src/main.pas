@@ -1,17 +1,17 @@
-﻿uses Controller;
-uses Utils;
+﻿uses Utils;
+uses Controller;
 uses Controls, Graph3D;
 
 begin 
   try
     clearLogFile();
 
-    Window.Title := 'Pylos Game';
+    Window.Title := APP_TITLE;
 
     // LeftPanel(150,Colors.Orange);
     // var b := new ButtonWPF('Создать шар');
 
-    var gameInstance := new ControllerT();
+    var gameInstance := new ControllerT(() -> Window.Close());
     gameInstance.StartGame();
   except
     on e: System.IndexOutOfRangeException do

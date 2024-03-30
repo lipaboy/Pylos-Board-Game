@@ -2,8 +2,10 @@
 
 uses Index;
 uses Cell;
+uses GameEventResult;
 uses ISubscriber;
 uses Players;
+uses PlayerEnum;
 uses GameLogic;
 uses GameSettings;
 
@@ -18,6 +20,8 @@ uses Utils;
 uses Graph3D;
 uses Ball;
 uses Timers;
+
+uses SoundPlayer;
 
 type
   GameViewT = class(ISubscriberT)
@@ -64,31 +68,31 @@ type
 
   procedure GameViewT.Notify(eventResult: GameEventResultT);
   begin
-    textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
-    if m_stepIndicator.Current <> m_gameLogic.Player.Who then
-      m_stepIndicator.SetBall(m_gameLogic.Player.Who);
-
+    if eventResult.IsGameOver then begin
+      textStep.Text := m_gameLogic.Player.Who = PlayerEnumT.BrightPlayer ? 
+        'Забрал инициативу Светлый игрок'
+        : 'Преимущество защитил Тёмный игрок';
+      m_stepIndicator.Hide();
+    end
+    else begin
+      textStep.Text := 'Ходит ' + m_gameLogic.Player.Name + ' игрок';
+      if m_stepIndicator.Current <> m_gameLogic.Player.Who then
+        m_stepIndicator.SetBall(m_gameLogic.Player.Who);
+    end;
     textBallCount.Text := 'Счёт: ' + m_gameLogic.PlayersDict.Item[BrightPlayer].BallsRemain
       + ' : ' + m_gameLogic.PlayersDict.Item[DarkPlayer].BallsRemain;
 
     if eventResult.IsInitializing then begin
       Init();
       m_stepIndicator.SetBall(m_gameLogic.Player.Who);
-
-      // Debug
-      // var kek : procedure(x, y: real; mousebutton: integer) := OnMouseMove;
-      // OnMouseMove := procedure (x,y,m) -> begin end;
-      // m_addBallAction.Hover((0, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((4, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((2, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((6, 0, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((0, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // m_addBallAction.Hover((4, 2, 0)); m_addBallAction.TryPlaceBall(0, 0);
-      // OnMouseMove := kek;
     end
     else if eventResult.IsAdd then begin
       var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
       m_field.SetBall(eventResult.AddToPlaceInd, ball);
+      
+      logln('GameView: Add ball');
+
+      SoundHandlerT.GetSoundPlayer().PlayKnock();
     end
     else if eventResult.IsMove then begin
       var ball := m_field.Get(eventResult.MoveBallInd);
@@ -105,6 +109,8 @@ type
       end;
       m_takeBallAction.IsActionOn := false;
     end;
+    
+    logln('GameView: method Notify');
     
     if eventResult.IsNeedToTake then begin
       m_takeBallAction.IsActionOn := true;

@@ -1,5 +1,6 @@
 unit FieldView;
 
+uses PlayerEnum;
 uses Players;
 uses Index;
 uses GameSettings;

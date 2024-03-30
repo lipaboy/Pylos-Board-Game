@@ -1,6 +1,9 @@
 import subprocess
 import os
 import shutil
+import sys
+
+# TODO: удалять файлы из src_dump, которых уже нет в проекте
 
 compilerPath = 'C:\\Program Files (x86)\\PascalABC.NET\\pabcnetc.exe'
 
@@ -17,9 +20,15 @@ for root, dirs, filesList in os.walk("src"):
 shutil.copytree('res', './build/res/', dirs_exist_ok=True)
 
 def compileTheFile(fileName: str):
-    subprocess.run([compilerPath, fileName, 'OutDir=./build/'], shell = True)
+    result = subprocess.run([compilerPath, fileName, 'OutDir=./build/'], shell=True)
+    if result.returncode == 0:
+        return True
+    return False
 
-compileTheFile("./build/src_dump/main.pas")
-
-shutil.move('./build/src_dump/main.exe', './build/PylosGame.exe')
-shutil.move('./build/src_dump/main.pdb', './build/PylosGame.pdb')
+if compileTheFile("./build/src_dump/main.pas"):
+    shutil.move('./build/src_dump/main.exe', './build/PylosGame.exe')
+    shutil.move('./build/src_dump/main.pdb', './build/PylosGame.pdb')
+    sys.exit(0)
+else:
+    print('Произошли ошибки во время компиляции.')
+    sys.exit(1)

@@ -3,6 +3,19 @@ unit Utils;
 uses Graph3D;
 
 // {$undef DEBUG}
+// {$define AUTO_PLAY}
+
+const
+{$ifdef DEBUG}
+  APP_TITLE = 'Pylos Game (Debug)';
+{$else}
+  APP_TITLE = 'Pylos Game';
+{$endif}
+{$ifdef AUTO_PLAY}
+  IS_AUTO_PLAY_MODE_ON = true;
+{$else}
+  IS_AUTO_PLAY_MODE_ON = false;
+{$endif}
 
 /////////////   Debug   //////////////
 
@@ -27,6 +40,7 @@ uses Graph3D;
   procedure clearLogFile();
   begin
     {$ifdef DEBUG}
+      // TODO: вывести дату начала ведения лога
       var f := OpenWrite('log.txt', Encoding.UTF8);
       Print(f, '');
       f.Close();

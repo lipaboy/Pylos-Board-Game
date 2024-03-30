@@ -3,6 +3,7 @@ unit SwitchingBall;
 uses Ball;
 uses Graph3D;
 uses Players;
+uses PlayerEnum;
 
 type
   SwitchingBallT = class
@@ -23,6 +24,11 @@ type
     property Dark: BallType read m_darkBall;
     property Bright: BallType read m_brightBall;
     property Current: PlayerEnumT read m_currBall.Player;
+
+    procedure Hide();
+    begin
+      m_currBall.Visible := false;
+    end;
 
     procedure SetBall(player: PlayerEnumT);
     begin

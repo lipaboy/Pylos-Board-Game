@@ -2,9 +2,7 @@ unit Players;
 
 uses Cell;
 uses GameSettings;
-
-type
-  PlayerEnumT = (BrightPlayer, DarkPlayer);
+uses PlayerEnum;
 
 type
 	PlayerT = class

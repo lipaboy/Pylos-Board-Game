@@ -1,19 +1,27 @@
 unit Controller;
 
+uses Graph3D;
+
+uses Utils;
 uses GameLogic;
 uses GameView;
-uses Graph3D;
+uses AutoPlayGame;
 
 type
   ControllerT = class
   private
     gameLogicInstance: GameLogicT;
     gameViewInstance: GameViewT;
+    autoPlayGameInstance: AutoPlayGameT;
+
+    isControlPressed := False;
+
   public
-    constructor Create();
+    constructor Create(quitEvent: () -> ());
     begin
       gameLogicInstance := new GameLogicT();
       gameViewInstance := new GameViewT(gameLogicInstance);
+      autoPlayGameInstance := new AutoPlayGameT(gameLogicInstance);
 
       gameLogicInstance.Subscribe(gameViewInstance);
 
@@ -28,9 +36,16 @@ type
           Key.S : Camera.AddDownForce();
           Key.A : Camera.AddLeftForce();
           Key.D : Camera.AddRightForce();
-          Key.E : Camera.AddForwardForce();
-          Key.Q : Camera.AddBackwardForce();
-          Key.Escape: OnClose();
+          // Key.Q : Camera.Rotate(V3D(0, 0, 1), 10);
+
+          Key.LeftCtrl: isControlPressed := True;
+          Key.Q : if isControlPressed then quitEvent();
+        end;
+      end;
+
+      OnKeyUp += procedure(k: Key) -> begin
+        case k of
+          Key.LeftCtrl: isControlPressed := False;
         end;
       end;
     end;
@@ -38,6 +53,8 @@ type
     procedure StartGame();
     begin
       gameLogicInstance.Start();
+      if IS_AUTO_PLAY_MODE_ON then
+        autoPlayGameInstance.Play();
     end;
   end;
 

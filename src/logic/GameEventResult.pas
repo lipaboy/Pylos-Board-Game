@@ -1,12 +1,14 @@
-unit ISubscriber;
+unit GameEventResult;
 
 uses Index;
 uses Players;
+uses PlayerEnum;
 
 type
   GameEventResultT = record
     IsInitializing: boolean := false;
 
+    // в чей ход произошло событие
     Who: PlayerEnumT;
 
     IsAdd: boolean := false;
@@ -21,11 +23,8 @@ type
     // событие взятия шаров и каких конкретно
     IsTaken: boolean := false;
     BallsTaken: List<IndexT>;
-  end;
 
-type
-  ISubscriberT = interface
-    procedure Notify(eventResult: GameEventResultT);
+    IsGameOver: boolean := false;
   end;
 
 end.
