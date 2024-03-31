@@ -11,11 +11,14 @@ uses Timers;
 ///////////   Ball (View)   //////////////
 
 // TODO: move into BallType class
-const
-	BASE_RADIUS = 1.0;
+// const
+	// BallType.BASE_RADIUS = 1.0;
 
 type
   BallType = class
+  public
+    static property BASE_RADIUS: real read 1.0;
+
   private
     m_figure: SphereT;
     m_material: GMaterial;
@@ -149,7 +152,7 @@ type
   constructor BallType.Create(pos: Point3D; player: PlayerEnumT; visible: boolean);
   begin
     m_player := player;
-    m_figure := Sphere(pos.x, pos.y, pos.z, BASE_RADIUS);
+    m_figure := Sphere(pos.x, pos.y, pos.z, BallType.BASE_RADIUS);
     m_figure.Visible := visible;
 
     if m_player = PlayerEnumT.BrightPlayer then begin

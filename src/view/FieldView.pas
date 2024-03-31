@@ -56,7 +56,7 @@ type
 
   constructor FieldViewT.Create(centerPos: Point3D);
   begin
-    var radius := BASE_RADIUS;
+    var radius := BallType.BASE_RADIUS;
     
     // Здесь хранятся значения высоты доски для шаров, а также координаты лунок
 
@@ -69,7 +69,8 @@ type
     for var k:= 0 to FHei do begin
       for var i := k to FWid - k step 2 do begin
         for var j := k to FWid - k step 2 do begin
-          fieldCoords[i, j, k] := P3D(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ);
+          fieldCoords[i, j, k] := 
+            P3D(x0 + j * halfDeltaX, y0 + i * halfDeltaY, z0 + k * deltaZ);
         end;
       end;
     end;

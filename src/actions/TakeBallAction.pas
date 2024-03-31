@@ -117,7 +117,7 @@ type
         var p := m_field.GetCoord(ind);
         // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
         // самого шара
-        if GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1 then
+        if GetRay(x, y).DistanceToPoint(p) <= BallType.BASE_RADIUS * 1.1 then
         begin
           var dstToCamera := Camera.Position.Distance(p);
           if dstToCamera < nearest then begin

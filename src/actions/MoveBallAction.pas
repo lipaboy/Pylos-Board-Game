@@ -58,9 +58,12 @@ type
 
     procedure Hover(ind: IndexT);
     procedure UnHover() := Hover(EmptyIndex());
+    // проверяем, попадают ли координаты курсора на цель 
+    // (шар, либо место для переноса). В случае успеха, выделяем цель
     function TryHover(x, y: real): boolean;
 
     procedure ResetStep();
+    // пытаемся выбрать цель (шар, либо место для переноса)
     function TrySelect(x, y: real): boolean;
 
   private
@@ -175,7 +178,7 @@ type
       var p := m_field.GetCoord(ind);
       // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
       // самого шара
-      if GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1 then
+      if GetRay(x, y).DistanceToPoint(p) <= BallType.BASE_RADIUS * 1.1 then
       begin
         var dstToCamera := Camera.Position.Distance(p);
         if dstToCamera < nearest then begin
@@ -200,7 +203,7 @@ type
         var p := m_field.GetCoord(pair[0]);
         // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
         // самого шара
-        if GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1 then
+        if GetRay(x, y).DistanceToPoint(p) <= BallType.BASE_RADIUS * 1.1 then
         begin
           var dstToCamera := Camera.Position.Distance(p);
           if dstToCamera < nearest then begin

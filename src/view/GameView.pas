@@ -209,7 +209,7 @@ type
     textBallCount := Text3D(0, baseY, 0, '', 2, textColor);
     textBallCount.Rotate(V3D(1, 0, 0), 90);
 
-    var pIndicator := P3D(11, baseY, BASE_RADIUS);
+    var pIndicator := P3D(11, baseY, BallType.BASE_RADIUS);
     m_stepIndicator := new SwitchingBallT(pIndicator, pIndicator);
     // m_stepIndicator.Dark.Figure.Scale(1.1);
     // m_stepIndicator.Bright.Figure.Scale(1.1);

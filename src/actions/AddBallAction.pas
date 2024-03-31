@@ -40,10 +40,7 @@ type
       UpdateCurrentBall();
     end;
 
-    function GetHoveredPlace(): IndexT;
-    begin
-      Result := m_hoverPlace;
-    end;
+    property HoveredPlace: IndexT read m_hoverPlace;
 
     procedure Hover(placeInd: IndexT);
     begin
@@ -67,9 +64,9 @@ type
 
     function TryPlaceBall(x, y: real): boolean;
     begin
-      if GetHoveredPlace() <> EmptyIndex() then
+      if Self.HoveredPlace <> EmptyIndex() then
       begin
-        m_gameLogic.AddBallStep(GetHoveredPlace());
+        m_gameLogic.AddBallStep(Self.HoveredPlace);
         UnHover();
         Result := true;
       end
@@ -81,44 +78,12 @@ type
     begin
       var ind := FindNearestAvailablePlaceToAdd(x, y);
       Hover(ind);
-      if ind <> EmptyIndex() then
-      begin
-        Result := true;
-      end
-      else
-        Result := false;
+      Result := ind <> EmptyIndex();
     end;
 
   private
+    function FindNearestAvailableBallToMove(x, y: real) : Integer;
     function FindNearestAvailablePlaceToAdd(x, y: real) : IndexT;
-    begin
-      var indFound := EmptyIndex();
-
-      var hoverInd := GetHoveredPlace();
-      if (hoverInd <> EmptyIndex()) 
-        and (GetRay(x, y).DistanceToPoint(m_field.GetCoord(hoverInd)) <= BASE_RADIUS) then
-      begin
-        Result := hoverInd;
-        exit;
-      end;
-
-      var nearest := real.MaxValue;
-      foreach var ind: IndexT in m_gameLogic.AvailablePos do begin
-        var p := m_field.GetCoord(ind);
-        // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
-        // самого шара
-        if GetRay(x, y).DistanceToPoint(p) <= BASE_RADIUS * 1.1 then
-        begin
-          var dstToCamera := Camera.Position.Distance(p);
-          if dstToCamera < nearest then begin
-            indFound := ind;
-            nearest := dstToCamera;
-          end;
-        end;
-      end;
-
-      Result := indFound;
-    end;
 
     procedure UpdateCurrentBall();
     begin
@@ -129,6 +94,62 @@ type
       m_currentBall := ball;
     end;
 
+  end;
+
+  function AddBallActionT.FindNearestAvailableBallToMove(x, y: real) : Integer;
+  begin
+    var ballsInRail := m_gameLogic.Player.Who = PlayerEnumT.BrightPlayer
+      ? m_field.BrightBalls : m_field.DarkBalls;
+
+    var nearest := real.MaxValue;
+    var railIndex := -1;
+    for var i := 0 to PLAYER_BALL_COUNT - 1 do begin
+      var p := ballsInRail[i].Position;
+      // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
+      // самого шара
+      if GetRay(x, y).DistanceToPoint(p) <= BallType.BASE_RADIUS * 1.05 then
+      begin
+        var dstToCamera := Camera.Position.Distance(p);
+        if dstToCamera < nearest then begin
+          nearest := dstToCamera;
+          railIndex := i;
+        end;
+      end;
+    end;
+
+    Result := railIndex;
+  end;
+
+  function AddBallActionT.FindNearestAvailablePlaceToAdd(x, y: real) : IndexT;
+  begin
+    var indFound := EmptyIndex();
+
+    // Q: разумна ли эта оптимизация в этом месте? может стоит её вынести отсюда,
+    //    сделав функцию более универсальной?
+    var hoverInd := Self.HoveredPlace;
+    if (hoverInd <> EmptyIndex()) 
+      and (GetRay(x, y).DistanceToPoint(m_field.GetCoord(hoverInd)) <= BallType.BASE_RADIUS) then
+    begin
+      Result := hoverInd;
+      exit;
+    end;
+
+    var nearest := real.MaxValue;
+    foreach var ind: IndexT in m_gameLogic.AvailablePos do begin
+      var p := m_field.GetCoord(ind);
+      // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
+      // самого шара
+      if GetRay(x, y).DistanceToPoint(p) <= BallType.BASE_RADIUS * 1.1 then
+      begin
+        var dstToCamera := Camera.Position.Distance(p);
+        if dstToCamera < nearest then begin
+          indFound := ind;
+          nearest := dstToCamera;
+        end;
+      end;
+    end;
+
+    Result := indFound;
   end;
 
 end.
