@@ -6,32 +6,36 @@ uses Index;
 uses Utils;
 uses GameLogic;
 uses GameSettings;
-uses FieldView;
-uses Ball;
 uses Players;
 uses PlayerEnum;
+
+uses Ball;
+uses FieldView;
+uses GravityAnimation;
+
+type
+  AddBallStateEnumT = (BALL, PLACE);
 
 type
   AddBallActionT = class
   private
     m_field: FieldViewT;
+
     m_hoverPlace: IndexT := EmptyIndex();
-    m_fantomBrightBall: BallType;
-    m_fantomDarkBall: BallType;
+    m_hoverRailInd: Integer := -1;
+
+    m_ballSelected: BallType := nil;
+    m_gravityAnim := new GravityAnimationT();
+
+    // legacy
     m_currentBall: BallType;
     m_gameLogic: GameLogicT;
 
+    m_fantomBrightBall: BallType;
+    m_fantomDarkBall: BallType;
+
   public
     constructor Create(gameLogic: GameLogicT; field: FieldViewT);
-    begin 
-      m_field := field;
-      m_gameLogic := gameLogic;
-      m_fantomBrightBall := new BallType(P3D(0, 0, 0), PlayerEnumT.BrightPlayer, false);
-      m_fantomBrightBall.SetBlue(true);
-      m_fantomDarkBall := new BallType(P3D(0, 0, 0), PlayerEnumT.DarkPlayer, false);
-      m_fantomDarkBall.SetBlue(true);
-      m_currentBall := m_fantomDarkBall;
-    end;
 
     procedure Init();
     begin
@@ -43,45 +47,54 @@ type
     property HoveredPlace: IndexT read m_hoverPlace;
 
     procedure Hover(placeInd: IndexT);
-    begin
-      UpdateCurrentBall();
-      if placeInd = m_hoverPlace then
-        exit;
-
-      m_hoverPlace := placeInd;
-
-      if placeInd = EmptyIndex() then
-      begin
-        m_currentBall.Visible := false;
-      end
-      else begin
-        m_currentBall.Visible := true;
-        m_currentBall.Position := m_field.GetCoord(placeInd);
-      end;
-    end;
-
     procedure UnHover() := Hover(EmptyIndex());
 
     function TryPlaceBall(x, y: real): boolean;
     begin
-      if Self.HoveredPlace <> EmptyIndex() then
+      if m_hoverRailInd >= 0 then
       begin
-        m_gameLogic.AddBallStep(Self.HoveredPlace);
-        UnHover();
-        Result := true;
-      end
-      else
-        Result := false;
+        m_ballSelected := GetRailBall(m_hoverRailInd);
+        m_ballSelected.SetHovered(false);
+        logln('' + m_ballSelected.Position.Z);
+        m_gravityAnim.StartFall(m_ballSelected.Figure, m_ballSelected.Position.Z + 5.0, 1.0);
+        Result := True;
+
+      end;
+      // if Self.HoveredPlace <> EmptyIndex() then
+      // begin
+      //   m_gameLogic.AddBallStep(Self.HoveredPlace);
+      //   UnHover();
+      //   Result := true;
+      // end
+      // else
+      //   Result := false;
     end;
 
     function TryHover(x, y: real): boolean;
     begin
-      var ind := FindNearestAvailablePlaceToAdd(x, y);
-      Hover(ind);
-      Result := ind <> EmptyIndex();
+      // var ind := FindNearestAvailablePlaceToAdd(x, y);
+      // Hover(ind);
+      // Result := ind <> EmptyIndex();
+      var iRail := FindNearestAvailableBallToMove(x, y);
+      if (iRail >= 0) then begin
+        if (iRail <> m_hoverRailInd) then begin
+          if m_hoverRailInd >= 0 then
+            GetRailBall(m_hoverRailInd).SetHovered(false);
+          var ball := GetRailBall(iRail);
+          ball.SetHovered(true);
+          m_hoverRailInd := iRail;
+        end;
+      end
+      else begin
+        if m_hoverRailInd >= 0 then
+          GetRailBall(m_hoverRailInd).SetHovered(false);
+      end;
     end;
 
   private
+    function GetRailBall(railIndex : Integer) 
+      := m_field.GetBallsOnRailBy(m_gameLogic.Player.Who)[railIndex];
+
     function FindNearestAvailableBallToMove(x, y: real) : Integer;
     function FindNearestAvailablePlaceToAdd(x, y: real) : IndexT;
 
@@ -96,10 +109,40 @@ type
 
   end;
 
+  // _________________ Реализация методов ________________ //
+
+  constructor AddBallActionT.Create(gameLogic: GameLogicT; field: FieldViewT);
+  begin 
+    m_field := field;
+    m_gameLogic := gameLogic;
+    m_fantomBrightBall := new BallType(P3D(0, 0, 0), PlayerEnumT.BrightPlayer, false);
+    m_fantomBrightBall.SetBlue(true);
+    m_fantomDarkBall := new BallType(P3D(0, 0, 0), PlayerEnumT.DarkPlayer, false);
+    m_fantomDarkBall.SetBlue(true);
+    m_currentBall := m_fantomDarkBall;
+  end;
+
+  procedure AddBallActionT.Hover(placeInd: IndexT);
+  begin
+    UpdateCurrentBall();
+    if placeInd = m_hoverPlace then
+      exit;
+
+    m_hoverPlace := placeInd;
+
+    if placeInd = EmptyIndex() then
+    begin
+      m_currentBall.Visible := false;
+    end
+    else begin
+      m_currentBall.Visible := true;
+      m_currentBall.Position := m_field.GetCoord(placeInd);
+    end;
+  end;
+
   function AddBallActionT.FindNearestAvailableBallToMove(x, y: real) : Integer;
   begin
-    var ballsInRail := m_gameLogic.Player.Who = PlayerEnumT.BrightPlayer
-      ? m_field.BrightBalls : m_field.DarkBalls;
+    var ballsInRail := m_field.GetBallsOnRailBy(m_gameLogic.Player.Who);
 
     var nearest := real.MaxValue;
     var railIndex := -1;

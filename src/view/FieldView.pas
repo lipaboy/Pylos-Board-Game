@@ -26,8 +26,12 @@ type
 
     // Warning: возможно тут происходит копирование массива целиком. 
     // Узкое место: вызов метода в AddBallAction при Hover event.
-    property BrightBalls: PlayerBallArrT read m_brightBalls;
-    property DarkBalls: PlayerBallArrT read m_darkBalls;
+    property BrightBallsOnRail: PlayerBallArrT read m_brightBalls;
+    property DarkBallsOnRail: PlayerBallArrT read m_darkBalls;
+
+    function GetBallsOnRailBy(player: PlayerEnumT) := 
+      player = PlayerEnumT.BrightPlayer 
+      ? Self.BrightBallsOnRail : Self.BrightBallsOnRail;
 
     function GetCoord(ind: IndexT) := IsValid(ind) 
       ? fieldCoords[ind[0], ind[1], ind[2]] : P3D(0, 0, 0);
