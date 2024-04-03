@@ -17,6 +17,7 @@ uses MoveBallAction;
 uses TakeBallAction;
 
 uses Utils;
+uses Mouse;
 uses Graph3D;
 uses Ball;
 uses Timers;
@@ -33,7 +34,6 @@ type
     m_moveBallAction: MoveBallActionT;
     m_takeBallAction: TakeBallActionT;
 
-    boardModel: FileModelT := nil;
     roomModel: FileModelT := nil;
 
     lampObj: FileModelT := nil;
@@ -127,8 +127,11 @@ type
       if m_takeBallAction.IsActionOn then begin
         m_takeBallAction.TryHover(x, y);
       end
-      else if m_moveBallAction.IsStepLocked then begin
+      else if m_moveBallAction.IsMoving then begin
         m_moveBallAction.TryHover(x, y);
+      end
+      else if m_addBallAction.IsMoving then begin
+        m_addBallAction.TryHover(x, y);
       end
       else begin
         var moveHoverSuccess := m_moveBallAction.TryHover(x, y);
@@ -143,11 +146,11 @@ type
     // -------- Выбор цели (select) -------- //
 
     OnMouseDown += procedure(x, y, mb) -> begin
-      if mb = 1 then begin
+      if mb = Mouse.LEFT_BUTTON then begin
         if m_takeBallAction.IsActionOn then begin
           m_takeBallAction.TrySelect();
         end
-        else if not m_moveBallAction.IsStepLocked then
+        else if not m_moveBallAction.IsMoving then
         begin
           if not m_addBallAction.TryPlaceBall(x, y) then
             m_moveBallAction.TrySelect(x, y);
@@ -155,7 +158,7 @@ type
         else
           m_moveBallAction.TrySelect(x, y);
       end
-      else if mb = 2 then begin
+      else if mb = Mouse.RIGHT_BUTTON then begin
         if m_takeBallAction.IsActionOn then begin
           m_takeBallAction.ResetStep();
         end
@@ -176,24 +179,18 @@ type
     View3D.ShowGridLines := False;
     View3D.BackgroundColor := Colors.Black;
 
-    var boardMaterial := 
+    var roomMaterial := 
       Materials.Diffuse(RGB(110,  51,  26)) 
         + Materials.Specular(100, 100) + Materials.Emissive(GrayColor(0));
 
     // Комната
-    roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', boardMaterial);
+    roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', roomMaterial);
     roomModel.Rotate(V3D(1, 0, 0), 90);
     roomModel.MoveOn(V3D(-38, -42, -5));
     roomModel.Scale(20);
 
-    // Доска
-    var centerPos := P3D(0, 0, 0);
-
-    boardModel := FileModel3D(centerPos, 'res/pylos_board.obj', boardMaterial);
-    boardModel.Scale(0.2);
-
     // Поле с шарами
-    m_field := new FieldViewT(centerPos);
+    m_field := new FieldViewT(P3D(0, 0, 0));
     
     // Обработка событий
     m_addBallAction := new AddBallActionT(m_gameLogic, m_field);

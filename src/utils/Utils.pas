@@ -2,22 +2,27 @@ unit Utils;
 
 uses Graph3D;
 
-// {$undef DEBUG}
-// {$define AUTO_PLAY}
+/////////////   Debug Mode   //////////////
 
+// {$undef DEBUG}
 const
 {$ifdef DEBUG}
   APP_TITLE = 'Pylos Game (Debug)';
 {$else}
   APP_TITLE = 'Pylos Game';
 {$endif}
+
+/////////////   Auto-play Mode   //////////////
+
+// {$define AUTO_PLAY}
+const
 {$ifdef AUTO_PLAY}
   IS_AUTO_PLAY_MODE_ON = true;
 {$else}
   IS_AUTO_PLAY_MODE_ON = false;
 {$endif}
 
-/////////////   Debug   //////////////
+/////////////   Loging (only in debug mode)   //////////////
 
   procedure logln(message: string := '');
   begin

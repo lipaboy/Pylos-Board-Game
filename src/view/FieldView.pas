@@ -21,6 +21,8 @@ type
     m_brightBalls: PlayerBallArrT;
     m_darkBalls: PlayerBallArrT;
 
+    m_boardModel: FileModelT := nil;
+
 	public
 		constructor Create(centerPos: Point3D);
 
@@ -61,6 +63,13 @@ type
   constructor FieldViewT.Create(centerPos: Point3D);
   begin
     var radius := BallType.BASE_RADIUS;
+
+    var boardMaterial := 
+      Materials.Diffuse(RGB(110,  51,  26)) 
+        + Materials.Specular(100, 100) + Materials.Emissive(GrayColor(0));
+
+    m_boardModel := FileModel3D(centerPos, 'res/pylos_board.obj', boardMaterial);
+    m_boardModel.Scale(0.2);
     
     // Здесь хранятся значения высоты доски для шаров, а также координаты лунок
 

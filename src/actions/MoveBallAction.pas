@@ -51,7 +51,7 @@ type
       UpdateCurrentPlayerBall();
     end;
 
-    property IsStepLocked: boolean read (m_state = MoveBallStateEnumT.PLACE);
+    property IsMoving: boolean read (m_state = MoveBallStateEnumT.PLACE);
     property HoveredBall: IndexT read m_hoverBall;
     property SelectedBall: IndexT read m_selectedBall;
     property HoveredPlace: IndexT read m_hoverPlace;
