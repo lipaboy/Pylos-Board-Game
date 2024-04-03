@@ -12,11 +12,15 @@ uses Graph3D;
 
 type PlayerBallArrT = array[0..PLAYER_BALL_COUNT-1] of BallType;
 
+type BordersType = array[0..3] of Point3D;
+
 type
 	FieldViewT = class
 	private
     fieldCoords: array[0..FWid, 0..FWid, 0..FHei] of Point3D;
     field: array[0..FWid, 0..FWid, 0..FHei] of BallType;
+
+    borderPoints: BordersType;
 
     m_brightBalls: PlayerBallArrT;
     m_darkBalls: PlayerBallArrT;
@@ -30,6 +34,7 @@ type
     // Узкое место: вызов метода в AddBallAction при Hover event.
     property BrightBallsOnRail: PlayerBallArrT read m_brightBalls;
     property DarkBallsOnRail: PlayerBallArrT read m_darkBalls;
+    property Borders: BordersType read borderPoints;
 
     function GetBallsOnRailBy(player: PlayerEnumT) := 
       player = PlayerEnumT.BrightPlayer 
@@ -146,6 +151,10 @@ type
       m_darkBalls[i] := ball;
     end;
 
+    borderPoints[0] := pocketNegXY;
+    borderPoints[1] := pocketNegXposY;
+    borderPoints[2] := pocketPosXY;
+    borderPoints[3] := pocketPosXnegY;
   end;
 
 end.

@@ -2,8 +2,10 @@ unit MoveBallAction;
 
 uses Graph3D;
 
-uses Index;
 uses Utils;
+uses Stereometry;
+
+uses Index;
 uses GameLogic;
 uses GameSettings;
 uses FieldView;

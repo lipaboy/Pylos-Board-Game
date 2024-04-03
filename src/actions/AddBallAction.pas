@@ -2,8 +2,10 @@ unit AddBallAction;
 
 uses Graph3D;
 
-uses Index;
 uses Utils;
+uses Stereometry;
+
+uses Index;
 uses GameLogic;
 uses GameSettings;
 uses Players;
@@ -143,7 +145,12 @@ type
 
   procedure AddBallActionT.FlyBall(x, y: real);
   begin
-    
+    var f := m_field.Borders[0];
+    var s := m_field.Borders[1];
+    var th := m_field.Borders[2];
+    // var normal := Vector3D.CrossProduct()
+
+    // GetRay(x, y)
   end;
 
   constructor AddBallActionT.Create(gameLogic: GameLogicT; field: FieldViewT);

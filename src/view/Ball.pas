@@ -10,10 +10,6 @@ uses Timers;
 
 ///////////   Ball (View)   //////////////
 
-// TODO: move into BallType class
-// const
-	// BallType.BASE_RADIUS = 1.0;
-
 type
   BallType = class
   public

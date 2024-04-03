@@ -7,6 +7,8 @@ import sys
 
 compilerPath = 'C:\\Program Files (x86)\\PascalABC.NET\\pabcnetc.exe'
 
+os.makedirs('./build/src_dump', exist_ok=True)
+
 # traverse root directory, and list directories as dirs and files as files
 for root, dirs, filesList in os.walk("src"):
     path = root.split(os.sep)
@@ -15,7 +17,7 @@ for root, dirs, filesList in os.walk("src"):
     for fname in filesList:
         if os.path.splitext(fname)[1] == '.pas':
             fullname = os.path.join(root, fname)
-            shutil.copy2(fullname, './build/src_dump')
+            shutil.copy2(fullname, './build/src_dump/')
 
 shutil.copytree('res', './build/res/', dirs_exist_ok=True)
 

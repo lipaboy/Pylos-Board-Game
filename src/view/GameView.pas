@@ -17,6 +17,7 @@ uses MoveBallAction;
 uses TakeBallAction;
 
 uses Utils;
+uses Stereometry;
 uses Mouse;
 uses Graph3D;
 uses Ball;
