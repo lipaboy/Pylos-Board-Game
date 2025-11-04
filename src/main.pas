@@ -7,6 +7,12 @@ begin
     clearLogFile();
 
     Window.Title := APP_TITLE;
+    Window.SetSize(Window.Width * 1.6, Window.Height * 1.3);
+    Window.CenterOnScreen;
+
+    var vec := Camera.LookDirection;
+    vec.Normalize();
+    Camera.MoveOn( vec * -17 );
 
     // LeftPanel(150,Colors.Orange);
     // var b := new ButtonWPF('Создать шар');

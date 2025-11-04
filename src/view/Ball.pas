@@ -48,7 +48,11 @@ type
     procedure SetRed(isRed: boolean);
     procedure SetYellow(isYellow: boolean);
     procedure SetBlue(isBlue: boolean);
+
     procedure SetHovered(isHovered: boolean);
+    procedure UnHover() := SetHovered(false);
+    procedure Hover() := SetHovered(true);
+
     procedure SetSelected(isSelected: boolean);
 
   private

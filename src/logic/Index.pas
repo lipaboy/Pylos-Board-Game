@@ -11,7 +11,11 @@ type
   
 function EmptyIndex() := (-1, -1, -1);
 
-function IsEmptyIndex(ind: IndexT) := (ind[0] = -1) and (ind[1] = -1) and (ind[2] = -1) ? true : false;
+// Проверка на пустой индекс
+function IsEmpty(Self: IndexT) : boolean; extensionmethod;
+begin
+  Result := (Self[0] = -1) and (Self[1] = -1) and (Self[2] = -1) ? true : false;
+end;
 
 function Top(ind : IndexT) : IndexT := (ind[0], ind[1], ind[2] + 1);
 function Bottom(ind : IndexT) : IndexT := (ind[0], ind[1], ind[2] - 1);
@@ -23,6 +27,8 @@ function UpRight(ind : IndexT) : IndexT := (ind[0] - 1, ind[1] + 1, ind[2]);
 function DownLeft(ind : IndexT) : IndexT := (ind[0] + 1, ind[1] - 1, ind[2]);
 function DownRight(ind : IndexT) : IndexT := (ind[0] + 1, ind[1] + 1, ind[2]);
 
+// Проверка, что индекс валидный: находится в пределах игрового поля
+// Note: хотелось бы чтобы случаев с невалидным индексом вообще не встречалось.
 function IsValid(ind : IndexT) : boolean;
 begin
   var k := ind[2];
@@ -38,5 +44,9 @@ begin
 end;
 
 function ToStr(ind: IndexT) := '(' + ind[0] + ', ' + ind[1] + ', ' + ind[2] + ')';
+function ToStr(Self: IndexT) : String; extensionmethod;
+begin
+  Result := '(' + Self[0] + ', ' + Self[1] + ', ' + Self[2] + ')';
+end;
 
 end.

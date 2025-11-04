@@ -36,6 +36,7 @@ type
     property DarkBallsOnRail: PlayerBallArrT read m_darkBalls;
     property Borders: BordersType read borderPoints;
 
+    (* Возвращаем массив шаров на рейке в зависимости от переданного цвета игрока *)
     function GetBallsOnRailBy(player: PlayerEnumT) := 
       player = PlayerEnumT.BrightPlayer 
       ? Self.BrightBallsOnRail : Self.BrightBallsOnRail;

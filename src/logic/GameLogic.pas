@@ -90,7 +90,7 @@ type
 
   procedure GameLogicT.AddBallStep(placeInd : IndexT);
   begin
-    if not IsEmptyIndex(placeInd) then begin
+    if not placeInd.IsEmpty then begin
       SetCell(placeInd, GetCellByPlayer(m_currPlayer));
       m_players.Item[m_currPlayer].BallsRemain -= 1;
 
