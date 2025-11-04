@@ -2,10 +2,16 @@ import subprocess
 import os
 import shutil
 import sys
+import time
 
 # TODO: удалять файлы из src_dump, которых уже нет в проекте
 
-compilerPath = 'C:\\Program Files (x86)\\PascalABC.NET\\pabcnetc.exe'
+compilerPath = 'C:\\Apps\\PascalABC.NET\\pabcnetc.exe'
+
+if not os.path.isfile(compilerPath):
+    print("Не существует такого файла:")
+    print(compilerPath)
+    sys.exit(1)
 
 os.makedirs('./build/src_dump', exist_ok=True)
 
@@ -22,7 +28,10 @@ for root, dirs, filesList in os.walk("src"):
 shutil.copytree('res', './build/res/', dirs_exist_ok=True)
 
 def compileTheFile(fileName: str):
+    startTime = time.time()
     result = subprocess.run([compilerPath, fileName, 'OutDir=./build/'], shell=True)
+    print()
+    print(f"Время сборки: {(time.time() - startTime):.1f} сек.")
     if result.returncode == 0:
         return True
     return False
