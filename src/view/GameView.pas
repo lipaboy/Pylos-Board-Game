@@ -40,6 +40,8 @@ type
     lampObj: FileModelT := nil;
     isDark := false;
 
+    clockObj: FileModelT := nil;
+
     textDebug : TextT;
     textBallCount : TextT;
 
@@ -211,6 +213,12 @@ type
     m_stepIndicator := new SwitchingBallT(pIndicator, pIndicator);
     // m_stepIndicator.Dark.Figure.Scale(1.1);
     // m_stepIndicator.Bright.Figure.Scale(1.1);
+
+    clockObj := FileModel3D(0, -20, 0, 'res/chess_clock/source/ChessClock.obj',
+       Materials.Diffuse(RGB(110,  51,  26)) );
+    clockObj.Scale(0.5);
+    clockObj.Rotate(V3D(1, 0, 0), 90);
+    clockObj.Rotate(V3D(0, 1, 0), 180);
 
     lampObj := FileModel3D(14, -5, -1, 'res/Lamp.obj', Materials.Specular(100, 100) );
     lampObj.Rotate(V3D(1, 0, 0), 90);
