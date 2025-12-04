@@ -90,35 +90,39 @@ type
 
   procedure GameLogicT.AddBallStep(placeInd : IndexT);
   begin
-    if not placeInd.IsEmpty then begin
-      SetCell(placeInd, GetCellByPlayer(m_currPlayer));
-      m_players.Item[m_currPlayer].BallsRemain -= 1;
-
-      if m_players[NextPlayer(m_currPlayer)].BallsRemain > 0 then
-        UpdateBallsToTake();
-
-      var eventResult: GameEventResultT;
-      if Self.BallsForTake.Any() then begin
-        eventResult.IsNeedToTake := true;
-        eventResult.Who := m_currPlayer;
-      end;
-
-      eventResult.IsAdd := true;
-      eventResult.AddToPlaceInd := placeInd;
-      eventResult.Who := m_currPlayer;
-
-      if (not eventResult.IsNeedToTake) and 
-        (m_players[NextPlayer(m_currPlayer)].BallsRemain > 0) then
-      begin
-        m_currPlayer := NextPlayer(m_currPlayer);
-      end;
-
-      if IsEnded() then
-        eventResult.IsGameOver := true;
-
-      CalcAvailablePos();
-      NotifyAll(eventResult);
+    if placeInd.IsEmpty then begin
+      exit;
     end;
+
+    SetCell(placeInd, GetCellByPlayer(m_currPlayer));
+    m_players.Item[m_currPlayer].BallsRemain -= 1;
+
+    if m_players[NextPlayer(m_currPlayer)].BallsRemain > 0 then
+      UpdateBallsToTake();
+
+    var eventResult: GameEventResultT;
+    if Self.BallsForTake.Any() then begin
+      eventResult.IsNeedToTake := true;
+      eventResult.Who := m_currPlayer;
+    end;
+
+    eventResult.IsAdd := true;
+    eventResult.AddToPlaceInd := placeInd;
+    eventResult.Who := m_currPlayer;
+
+    if (not eventResult.IsNeedToTake) and 
+      (m_players[NextPlayer(m_currPlayer)].BallsRemain > 0) then
+    begin
+      m_currPlayer := NextPlayer(m_currPlayer);
+    end;
+
+    if IsEnded() then
+      eventResult.IsGameOver := true;
+
+    CalcAvailablePos();
+
+    logln('GameLogic: Ball is added');
+    NotifyAll(eventResult);
   end;
 
   procedure GameLogicT.MoveBallStep(ballInd, placeInd : IndexT);

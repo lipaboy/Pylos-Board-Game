@@ -51,13 +51,15 @@ type
     property HoveredPlace: IndexT read m_hoverPlace;
     property IsMoving: Boolean read (m_state = AddBallStateEnumT.PLACE);
 
-    function Hover(placeInd: IndexT) : Boolean;
-    procedure UnHover() := Hover(EmptyIndex());
-
     function TryPlaceBall(x, y: real): Boolean;
     function TryHover(x, y: real): Boolean;
 
+    procedure UnHover() := PlaceFantomBall(EmptyIndex());
+
   private
+    function PlaceFantomBall(placeInd: IndexT) : Boolean;
+    procedure HideFantomBall();
+
     procedure FlyBall(x, y: real);
 
     function GetRailBall(railIndex : Integer) 
@@ -79,6 +81,71 @@ type
 
   // _________________ Реализация методов ________________ //
 
+  (* Вычисление по координате мышки, какой шар нужно выделить
+    и соответствующее выделение. Также обрабатываем каждое
+    движение курсора. *)
+  function AddBallActionT.TryHover(x, y: real): Boolean;
+  begin
+    (* Если шар ещё не движется (т.е. не летит) *)
+    if not Self.IsMoving then begin
+      var iRail := FindNearestAvailableBallToMove(x, y);
+
+      if (iRail < 0) then begin (* Не нашли шар для выделения *)
+        (* Если до этого был выделенный шар, снимаем с него выделение *)
+        if m_hoverRailInd >= 0 then begin
+          GetRailBall(m_hoverRailInd).UnHover();
+          m_hoverRailInd := -1;
+        end;
+        Result := false;
+        exit;
+      end;
+
+      (* Нашли шар для выделения *)
+
+      (* Шар уже выделен *)
+      if (iRail = m_hoverRailInd) then begin
+        Result := true;
+        exit;
+      end;
+
+      logln('Hover ball ' + iRail);
+
+      (* Курсор навёлся на новый шар *)
+
+      (* Если до этого был выделен шар, развыделяем его *)
+      if m_hoverRailInd >= 0 then
+        GetRailBall(m_hoverRailInd).UnHover();
+
+      (* Выделяем новый шар *)
+      var ball := GetRailBall(iRail);
+      ball.Hover();
+      m_hoverRailInd := iRail;
+      Result := true;
+      exit;
+    end
+    else begin      
+      (* Шар находится в движении (в полёте) *)
+
+      (* Ищем место, куда можно положить шар *)
+      var ind : IndexT := FindNearestAvailablePlaceToAdd(x, y);
+
+      var isHovered : Boolean := PlaceFantomBall(ind);
+
+      if ind.IsEmpty or not isHovered then begin
+        Result := false;
+        exit;
+      end;
+
+      logln('Ball starts flying to ' + ind.ToStr);
+      var coord := m_field.GetCoord(ind);
+      FlyBall(coord.x, coord.y);
+    end;
+
+    Result := false;
+  end;
+
+  //----------------------
+
   function AddBallActionT.TryPlaceBall(x, y: real): boolean;
   begin
     if not IsMoving then begin
@@ -97,88 +164,25 @@ type
     end
     else begin
       logln('' + m_ballSelected.Position.Z);
+
+      var ind: IndexT := Self.HoveredPlace;
+      var placeCoord := m_currentBall.Position;
+      HideFantomBall();
+
       m_gravityAnim.StartFall(m_ballSelected.Figure, 
-                              m_ballSelected.Position.Z - 5.0, -1.0);
+                              placeCoord.Z, -1.0);
       m_state := AddBallStateEnumT.BALL;
-      UnHover();
+      m_field.MoveToBoard(m_hoverRailInd, ind, m_gameLogic.Player.Who);
+      m_gameLogic.AddBallStep(ind);
+      m_hoverRailInd := -1;
     end;
     Result := True;
-
-    (* Previous implementation *)
-    // if Self.HoveredPlace <> EmptyIndex() then
-    // begin
-    //   m_gameLogic.AddBallStep(Self.HoveredPlace);
-    //   UnHover();
-    //   Result := true;
-    // end
-    // else
-    //   Result := false;
   end;
 
-  (* Вычисление по координате мышки, какой шар нужно выделить
-    и соответствующее выделение. Также обрабатываем каждое
-    движение курсора. *)
-  function AddBallActionT.TryHover(x, y: real): Boolean;
-  begin
-    (* Previous implementation *)
-    // var ind := FindNearestAvailablePlaceToAdd(x, y);
-    // Hover(ind);
-    // Result := ind <> EmptyIndex();
+  //----------------------
 
-    (* Если шар ещё не движется (т.е. не летит) *)
-    if not Self.IsMoving then begin
-      var iRail := FindNearestAvailableBallToMove(x, y);
-      (* Нашли шар для выделения *)
-      if (iRail >= 0) then begin
-        (* Шар уже выделен *)
-        if (iRail = m_hoverRailInd) then begin
-          Result := true;
-          exit;
-        end;
-
-        (* Курсор навёлся на новый шар *)
-
-        (* Если до этого был выделен шар, развыделяем его *)
-        if m_hoverRailInd >= 0 then
-          GetRailBall(m_hoverRailInd).UnHover();
-
-        (* Выделяем новый шар *)
-        var ball := GetRailBall(iRail);
-        ball.Hover();
-        m_hoverRailInd := iRail;
-        Result := true;
-        exit;
-      end
-      else begin (* Не нашли шар для выделения *)
-        (* Если до этого был выделенный шар, снимаем с него выделение *)
-        if m_hoverRailInd >= 0 then
-          GetRailBall(m_hoverRailInd).UnHover();
-        Result := false;
-        exit;
-      end;
-    end
-    else begin      
-      (* Шар находится в движении (в полёте) *)
-
-      (* Ищем место, куда можно положить шар *)
-      var ind : IndexT := FindNearestAvailablePlaceToAdd(x, y);
-
-      var isHovered : Boolean := Hover(ind);
-
-      if ind.IsEmpty or not isHovered then begin
-        Result := false;
-        exit;
-      end;
-
-      logln('Ball starts flying to ' + ind.ToStr);
-      var coord := m_field.GetCoord(ind);
-      FlyBall(coord.x, coord.y);
-    end;
-
-    Result := false;
-  end;
-
-  function AddBallActionT.Hover(placeInd: IndexT) : Boolean;
+  (* Как будто сложная функция, упростить бы её *)
+  function AddBallActionT.PlaceFantomBall(placeInd: IndexT) : Boolean;
   begin
     UpdateCurrentBall();
     if placeInd = m_hoverPlace then begin
@@ -200,27 +204,21 @@ type
     end;
   end;
 
+  //----------------------
+
+  procedure AddBallActionT.HideFantomBall();
+  begin
+    m_hoverPlace := EmptyIndex();
+    logln('  Hide Fantom BAll');
+    m_currentBall.Visible := false;
+    if m_currentBall = m_fantomBrightBall then
+      logln('    bright ball');
+  end;
+
+  //----------------------
+
   procedure AddBallActionT.FlyBall(x, y: real);
   begin
-      /// Расчёт полёта за курсором мышки
-
-      // var f := m_field.Borders[0];
-      // var s := m_field.Borders[1];
-      // var th := m_field.Borders[2];
-      // var normal := Vector3D.CrossProduct(s - f, th - f);
-      // normal.Normalize();
-
-      // var cameraRay := GetRay(x, y);
-      // var proj1 := cameraRay.Origin - 
-      //   normal * Vector3D.DotProduct(cameraRay.Origin - f, normal);
-      // var o := cameraRay.Origin + cameraRay.Direction;
-      // var proj2 := o - normal * Vector3D.DotProduct(o - f, normal);
-      // var point := cameraRay.LineIntersection(Ray(proj1, proj2 - proj1));
-
-      // var destPoint := P3D(point.x, point.y, m_ballSelected.Position.Z);
-
-      // Полёт до места выделения на поле (когда показывается синий шар)
-
     var destPoint := P3D(x, y, m_ballSelected.Position.Z);
 
     var f: Point3D -> AnimationBase := destPoint -> 
@@ -256,6 +254,8 @@ type
     end;
   end;
 
+  //----------------------
+
   constructor AddBallActionT.Create(gameLogic: GameLogicT; field: FieldViewT);
   begin 
     m_field := field;
@@ -267,6 +267,8 @@ type
     m_currentBall := m_fantomDarkBall;
   end;
 
+  //----------------------
+
   procedure AddBallActionT.Init();
   begin
     m_currentBall := m_fantomDarkBall;
@@ -274,6 +276,8 @@ type
     m_state := AddBallStateEnumT.BALL;
     UpdateCurrentBall();
   end;
+
+  //----------------------
 
   (* Функция для нахождения шара на рейке, который можно выделить *)
   function AddBallActionT.FindNearestAvailableBallToMove(x, y: real) : Integer;
@@ -283,6 +287,8 @@ type
     var nearest := real.MaxValue;
     var railIndex := -1;
     for var i := 0 to PLAYER_BALL_COUNT - 1 do begin
+      if ballsInRail[i] = nil then
+        continue;
       var p := ballsInRail[i].Position;
       // коэффициент 1.1 выбран, чтобы область выделения шара была чуть больше чем размер
       // самого шара
@@ -298,6 +304,8 @@ type
 
     Result := railIndex;
   end;
+
+  //----------------------
 
   (* Функция для поиска ближайщего места, куда можно поставить шар на поле *)
   function AddBallActionT.FindNearestAvailablePlaceToAdd(x, y: real) : IndexT;

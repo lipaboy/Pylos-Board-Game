@@ -90,9 +90,9 @@ type
       m_stepIndicator.SetBall(m_gameLogic.Player.Who);
     end
     else if eventResult.IsAdd then begin
-      var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
-      m_field.SetBall(eventResult.AddToPlaceInd, ball);
-      
+      // var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
+      // m_field.SetBall(eventResult.AddToPlaceInd, ball);
+
       logln('GameView: Add ball');
 
       SoundHandlerT.GetSoundPlayer().PlayKnock();
@@ -142,6 +142,7 @@ type
           m_addBallAction.TryHover(x, y);
         end
         else
+          logln('GameView: AddBallAction.UnHover');
           m_addBallAction.UnHover();
       end;
     end;
@@ -214,7 +215,7 @@ type
     // m_stepIndicator.Dark.Figure.Scale(1.1);
     // m_stepIndicator.Bright.Figure.Scale(1.1);
 
-    clockObj := FileModel3D(0, -20, 0, 'res/chess_clock/source/ChessClock.obj',
+    clockObj := FileModel3D(0, -20, -0.5, 'res/chess_clock/source/ChessClock.obj',
        Materials.Diffuse(RGB(110,  51,  26)) );
     clockObj.Scale(0.5);
     clockObj.Rotate(V3D(1, 0, 0), 90);

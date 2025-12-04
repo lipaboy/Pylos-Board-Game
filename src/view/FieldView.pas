@@ -9,10 +9,13 @@ uses Utils;
 
 uses Graph3D;
 
+//----------------------
 
 type PlayerBallArrT = array[0..PLAYER_BALL_COUNT-1] of BallType;
 
 type BordersType = array[0..3] of Point3D;
+
+//----------------------
 
 type
 	FieldViewT = class
@@ -39,11 +42,22 @@ type
     (* Возвращаем массив шаров на рейке в зависимости от переданного цвета игрока *)
     function GetBallsOnRailBy(player: PlayerEnumT) := 
       player = PlayerEnumT.BrightPlayer 
-      ? Self.BrightBallsOnRail : Self.BrightBallsOnRail;
+        ? Self.BrightBallsOnRail : Self.DarkBallsOnRail;
+    procedure RemoveBallFromRailBy(player: PlayerEnumT; railInd: Integer);
+    begin
+      if railInd < 0 then
+        exit;
+      if player = PlayerEnumT.BrightPlayer then 
+        m_brightBalls[railInd] := nil
+      else
+        m_darkBalls[railInd] := nil;
+    end;
 
-    function GetCoord(ind: IndexT) := IsValid(ind) 
+    procedure MoveToBoard(railInd: Integer; boardInd: IndexT; player: PlayerEnumT);
+
+    function GetCoord(ind: IndexT) : Point3D := IsValid(ind) 
       ? fieldCoords[ind[0], ind[1], ind[2]] : P3D(0, 0, 0);
-    function Get(ind: IndexT) := IsValid(ind) ? field[ind[0], ind[1], ind[2]] : nil;
+    function Get(ind: IndexT) : BallType := IsValid(ind) ? field[ind[0], ind[1], ind[2]] : nil;
     procedure SetBall(ind: IndexT; ball: BallType);
     begin
     	if ball <> nil then begin
@@ -65,6 +79,18 @@ type
 	end;
 
   // _________________ Реализация методов ________________ //
+
+  procedure FieldViewT.MoveToBoard(railInd: Integer; boardInd: IndexT; player: PlayerEnumT);
+  begin
+    if (railInd < 0) or boardInd.IsEmpty then begin
+      exit;
+    end;
+    var ball := GetBallsOnRailBy(player)[railInd];
+    RemoveBallFromRailBy(player, railInd);
+    field[boardInd[0], boardInd[1], boardInd[2]] := ball;
+  end;
+
+  //----------------------
 
   constructor FieldViewT.Create(centerPos: Point3D);
   begin

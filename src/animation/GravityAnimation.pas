@@ -34,8 +34,10 @@ type
             m_object.Z += m_dir * (GRAVITY * t * t / 2.0 + t * m_speedCoef - diff);
             diff := GRAVITY * t * t / 2.0  + t * m_speedCoef - diff;
           end
-          else
+          else begin
             timerRef.Stop();
+            m_object.Z := m_zLevel;
+          end;
         end);
       timerRef := m_timer;
     end;
