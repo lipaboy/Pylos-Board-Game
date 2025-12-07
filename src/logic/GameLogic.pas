@@ -1,11 +1,11 @@
 unit GameLogic;
 
-uses Utils;
+uses Utils in '../util/Utils';
 
 uses Cell;
-uses Index;
-uses GameEventResult;
-uses ISubscriber;
+uses Index in '../logic/Index';
+uses GameEventResult in '../logic/GameEventResult';
+uses ISubscriber in '../logic/ISubscriber';
 uses Players;
 uses GameSettings;
 uses PlayerEnum;

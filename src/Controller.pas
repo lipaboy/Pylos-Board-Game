@@ -2,10 +2,10 @@ unit Controller;
 
 uses Graph3D;
 
-uses Utils;
-uses GameLogic;
-uses GameView;
-uses AutoPlayGame;
+uses Utils in 'util/Utils';
+uses GameLogic in 'logic/GameLogic';
+uses GameView  in 'view/GameView';
+uses AutoPlayGame in 'autoGame/AutoPlayGame';
 
 type
   ControllerT = class

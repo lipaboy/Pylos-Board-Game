@@ -1,9 +1,9 @@
 unit SwitchingBall;
 
-uses Ball;
+uses Ball in '../view/Ball';
 uses Graph3D;
-uses Players;
-uses PlayerEnum;
+uses Players in '../logic/Players';
+uses PlayerEnum in '../logic/PlayerEnum';
 
 type
   SwitchingBallT = class

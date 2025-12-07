@@ -2,7 +2,7 @@ unit Index;
 
 uses GameSettings;
 
-uses Utils;
+uses Utils in '../util/Utils';
 
 (* 
   Note: Чем выше уровень k, тем меньше слой, т.е. k=0 - основание пирамиды, k=FHei - её верхушка.

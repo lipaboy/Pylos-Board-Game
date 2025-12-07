@@ -1,11 +1,11 @@
 unit FieldView;
 
-uses PlayerEnum;
-uses Players;
-uses Index;
-uses GameSettings;
-uses Ball;
-uses Utils;
+uses PlayerEnum in '../logic/PlayerEnum';
+uses Players in '../logic/Players';
+uses Index in '../logic/Index';
+uses GameSettings in '../logic/GameSettings';
+uses Ball in '../view/Ball';
+uses Utils in '../util/Utils';
 
 uses Graph3D;
 
@@ -100,7 +100,7 @@ type
       Materials.Diffuse(RGB(110,  51,  26)) 
         + Materials.Specular(100, 100) + Materials.Emissive(GrayColor(0));
 
-    m_boardModel := FileModel3D(centerPos, 'res/pylos_board.obj', boardMaterial);
+    m_boardModel := FileModel3D(centerPos, '../res/pylos_board.obj', boardMaterial);
     m_boardModel.Scale(0.2);
     
     // Здесь хранятся значения высоты доски для шаров, а также координаты лунок

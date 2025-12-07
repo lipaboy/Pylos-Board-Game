@@ -1,9 +1,9 @@
 unit Ball;
 
-uses Players;
-uses PlayerEnum;
-uses GameSettings;
-uses GameLogic;
+uses Players in '../logic/Players';
+uses PlayerEnum in '../logic/PlayerEnum';
+uses GameSettings in '../logic/GameSettings';
+uses GameLogic in '../logic/GameLogic';
 uses Graph3D;
 
 uses Timers;
@@ -156,11 +156,11 @@ type
     m_figure.Visible := visible;
 
     if m_player = PlayerEnumT.BrightPlayer then begin
-      m_material := ImageMaterial('res/tree_texture.jpg');
+      m_material := ImageMaterial('../res/tree_texture.jpg');
       m_figure.Rotate(V3D(0, 0, 1), 180);
     end
     else begin
-      m_material := ImageMaterial('res/tree_texture_dark.jpg');
+      m_material := ImageMaterial('../res/tree_texture_dark.jpg');
     end;
     SetBaseMaterial();
 

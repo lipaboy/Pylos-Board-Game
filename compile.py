@@ -12,7 +12,7 @@ COMPILER_PATH = 'C:\\Apps\\PascalABC.NET\\pabcnetc.exe'
 
 def compileTheFile(fileName: str):
     startTime = time.time()
-    result = subprocess.run([COMPILER_PATH, fileName, 'OutDir=./build/'], shell=True)
+    result = subprocess.run([COMPILER_PATH, fileName, 'OutDir=./build/ Debug=0'], shell=True)
     print()
     print(f"Время сборки: {(time.time() - startTime):.1f} сек.")
     if result.returncode == 0:
@@ -30,23 +30,24 @@ if __name__ == "__main__":
         print(COMPILER_PATH)
         sys.exit(1)
 
-    os.makedirs('./build/src_dump', exist_ok=True)
+    # os.makedirs('./build/src_dump', exist_ok=True)
 
     # traverse root directory, and list directories as dirs and files as files
-    for root, dirs, filesList in os.walk("src"):
-        path = root.split(os.sep)
-        # print((len(path) - 1) * '---', os.path.basename(root))
-        # print(os.path.basename(root))
-        for fname in filesList:
-            if os.path.splitext(fname)[1] == '.pas':
-                fullname = os.path.join(root, fname)
-                shutil.copy2(fullname, './build/src_dump/')
+    # for root, dirs, filesList in os.walk("src"):
+    #     path = root.split(os.sep)
+    #     # print((len(path) - 1) * '---', os.path.basename(root))
+    #     # print(os.path.basename(root))
+    #     for fname in filesList:
+    #         if os.path.splitext(fname)[1] == '.pas':
+    #             fullname = os.path.join(root, fname)
+    #             shutil.copy2(fullname, './build/src_dump/')
 
+    shutil.copytree('src', './build/src/', dirs_exist_ok=True)
     shutil.copytree('res', './build/res/', dirs_exist_ok=True)
 
-    if compileTheFile("./build/src_dump/main.pas"):
-        shutil.move('./build/src_dump/main.exe', './build/PylosGame.exe')
-        shutil.move('./build/src_dump/main.pdb', './build/PylosGame.pdb')
+    if compileTheFile("./build/src/main.pas"):
+        shutil.move('./build/src/main.exe', './build/PylosGame.exe')
+        shutil.move('./build/src/main.pdb', './build/PylosGame.pdb')
         sys.exit(0)
     else:
         print('Произошли ошибки во время компиляции.')

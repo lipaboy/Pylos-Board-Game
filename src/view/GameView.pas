@@ -1,29 +1,29 @@
 ﻿unit GameView;
 
-uses Index;
-uses Cell;
-uses GameEventResult;
-uses ISubscriber;
-uses Players;
-uses PlayerEnum;
-uses GameLogic;
-uses GameSettings;
+uses Index in '../logic/Index';
+uses Cell in '../logic/Cell';
+uses GameEventResult in '../logic/GameEventResult';
+uses ISubscriber in '../logic/ISubscriber';
+uses Players in '../logic/Players';
+uses PlayerEnum in '../logic/PlayerEnum';
+uses GameLogic in '../logic/GameLogic';
+uses GameSettings in '../logic/GameSettings';
 
-uses FieldView;
+uses FieldView in '../view/FieldView';
 uses SwitchingBall;
 
-uses AddBallAction;
-uses MoveBallAction;
-uses TakeBallAction;
+uses AddBallAction in '../action/AddBallAction';
+uses MoveBallAction in '../action/MoveBallAction';
+uses TakeBallAction in '../action/TakeBallAction';
 
-uses Utils;
-uses Stereometry;
-uses Mouse;
+uses Utils in '../util/Utils';
+uses Stereometry in '../util/Stereometry';
+uses Mouse in '../util/Mouse';
 uses Graph3D;
-uses Ball;
+uses Ball in '../view/Ball';
 uses Timers;
 
-uses SoundPlayer;
+uses SoundPlayer in '../sound/SoundPlayer';
 
 type
   GameViewT = class(ISubscriberT)
@@ -120,6 +120,7 @@ type
     end;
 
     logln('INFO: GameView: Processed the GameLogic notification');
+    Println('INFO: GameView: Processed the GameLogic notification');
   end;
 
   procedure GameViewT.AddMouseEvent();
@@ -188,7 +189,7 @@ type
         + Materials.Specular(100, 100) + Materials.Emissive(GrayColor(0));
 
     // Комната
-    roomModel := FileModel3D(0, 0, 0, 'res/Scene/Low_poly_bedroom.obj', roomMaterial);
+    roomModel := FileModel3D(0, 0, 0, '../res/Scene/Low_poly_bedroom.obj', roomMaterial);
     roomModel.Rotate(V3D(1, 0, 0), 90);
     roomModel.MoveOn(V3D(-38, -42, -5));
     roomModel.Scale(20);
@@ -215,13 +216,13 @@ type
     // m_stepIndicator.Dark.Figure.Scale(1.1);
     // m_stepIndicator.Bright.Figure.Scale(1.1);
 
-    clockObj := FileModel3D(0, -20, -0.5, 'res/chess_clock/source/ChessClock.obj',
+    clockObj := FileModel3D(0, -20, -0.5, '../res/chess_clock/source/ChessClock.obj',
        Materials.Diffuse(RGB(110,  51,  26)) );
     clockObj.Scale(0.5);
     clockObj.Rotate(V3D(1, 0, 0), 90);
     clockObj.Rotate(V3D(0, 1, 0), 180);
 
-    lampObj := FileModel3D(14, -5, -1, 'res/Lamp.obj', Materials.Specular(100, 100) );
+    lampObj := FileModel3D(14, -5, -1, '../res/Lamp.obj', Materials.Specular(100, 100) );
     lampObj.Rotate(V3D(1, 0, 0), 90);
     lampObj.Scale(8);
     OnMouseDown += procedure (x,y,mb) -> begin

@@ -2,7 +2,7 @@ unit SoundPlayer;
 
 {$reference PresentationCore.dll}
 uses Graph3D;
-uses Utils;
+uses Utils in '../util/Utils';
 
 type
   SoundPlayerT = class

@@ -1,6 +1,6 @@
 unit ISubscriber;
 
-uses GameEventResult;
+uses GameEventResult in '../logic/GameEventResult';
 
 // TODO: rename to IGameLogicSubscriber
 

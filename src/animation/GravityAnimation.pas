@@ -2,7 +2,7 @@ unit GravityAnimation;
 
 uses Graph3D;
 uses Timers;
-uses Utils;
+uses Utils in '../util/Utils';
 
 const 
   GRAVITY = 9.8;

@@ -2,16 +2,16 @@ unit MoveBallAction;
 
 uses Graph3D;
 
-uses Utils;
-uses Stereometry;
+uses Utils in '../util/Utils';
+uses Stereometry in '../util/Stereometry';
 
-uses Index;
-uses GameLogic;
-uses GameSettings;
-uses FieldView;
-uses Ball;
-uses Players;
-uses PlayerEnum;
+uses Index in '../logic/Index';
+uses GameLogic in '../logic/GameLogic';
+uses GameSettings in '../logic/GameSettings';
+uses FieldView in '../view/FieldView';
+uses Ball in '../view/Ball';
+uses Players in '../logic/Players';
+uses PlayerEnum in '../logic/PlayerEnum';
 
 type
   MoveBallStateEnumT = (BALL, PLACE);

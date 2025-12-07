@@ -1,11 +1,11 @@
 unit AutoPlayGame;
 
-uses Index;
-uses GameEventResult;
-uses ISubscriber;
-uses GameLogic;
-uses PlayerEnum;
-uses Players;
+uses Index in '../logic/Index';
+uses GameEventResult in '../logic/GameEventResult';
+uses ISubscriber in '../logic/ISubscriber';
+uses GameLogic in '../logic/GameLogic';
+uses PlayerEnum in '../logic/PlayerEnum';
+uses Players in '../logic/Players';
 
 type
   AutoPlayGameT = class(ISubscriberT)

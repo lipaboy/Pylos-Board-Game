@@ -1,4 +1,4 @@
-﻿uses Utils;
+﻿uses Utils in 'util/Utils';
 uses Controller;
 uses Controls, Graph3D;
 

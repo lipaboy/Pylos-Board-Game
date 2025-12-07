@@ -2,18 +2,18 @@ unit AddBallAction;
 
 uses Graph3D;
 
-uses Utils;
-uses Stereometry;
+uses Utils in '../util/Utils';
+uses Stereometry in '../util/Stereometry';
 
-uses Index;
-uses GameLogic;
-uses GameSettings;
-uses Players;
-uses PlayerEnum;
+uses Index in '../logic/Index';
+uses GameLogic in '../logic/GameLogic';
+uses GameSettings in '../logic/GameSettings';
+uses Players in '../logic/Players';
+uses PlayerEnum in '../logic/PlayerEnum';
 
-uses Ball;
-uses FieldView;
-uses GravityAnimation;
+uses Ball in '../view/Ball';
+uses FieldView in '../view/FieldView';
+uses GravityAnimation in '../animation/GravityAnimation';
 
 uses AnimSeq;
 

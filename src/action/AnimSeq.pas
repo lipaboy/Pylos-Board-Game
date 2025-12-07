@@ -1,6 +1,6 @@
 unit AnimSeq;
 
-uses Utils;
+uses Utils in '../util/Utils';
 
 type
   AnimSeqT = class

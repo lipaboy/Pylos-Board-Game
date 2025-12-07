@@ -1,6 +1,6 @@
 unit GameEventResult;
 
-uses Index;
+uses Index in '../logic/Index';
 uses Players;
 uses PlayerEnum;
 
