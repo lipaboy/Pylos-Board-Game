@@ -21,6 +21,7 @@ def compileTheFile(fileName: str):
 
 if __name__ == "__main__":
     # TODO: удалять файлы из src_dump, которых уже нет в проекте
+    # по идее надо просто удалить всю папку перед этим
 
     if "-c" in sys.argv:
         shutil.rmtree("./build")
@@ -29,18 +30,6 @@ if __name__ == "__main__":
         print("Не существует такого файла:")
         print(COMPILER_PATH)
         sys.exit(1)
-
-    # os.makedirs('./build/src_dump', exist_ok=True)
-
-    # traverse root directory, and list directories as dirs and files as files
-    # for root, dirs, filesList in os.walk("src"):
-    #     path = root.split(os.sep)
-    #     # print((len(path) - 1) * '---', os.path.basename(root))
-    #     # print(os.path.basename(root))
-    #     for fname in filesList:
-    #         if os.path.splitext(fname)[1] == '.pas':
-    #             fullname = os.path.join(root, fname)
-    #             shutil.copy2(fullname, './build/src_dump/')
 
     shutil.copytree('src', './build/src/', dirs_exist_ok=True)
     shutil.copytree('res', './build/res/', dirs_exist_ok=True)

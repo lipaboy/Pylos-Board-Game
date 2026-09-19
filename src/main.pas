@@ -1,4 +1,5 @@
-﻿uses Utils in 'util/Utils';
+﻿uses Logger in 'util/Logger';
+uses Utils in 'util/Utils';
 uses Controller;
 uses Controls, Graph3D;
 

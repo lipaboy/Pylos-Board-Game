@@ -3,6 +3,7 @@ unit AddBallAction;
 uses Graph3D;
 
 uses Utils in '../util/Utils';
+uses Logger in '../util/Logger';
 uses Stereometry in '../util/Stereometry';
 
 uses Index in '../logic/Index';
