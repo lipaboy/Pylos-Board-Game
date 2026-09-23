@@ -17,6 +17,7 @@ uses MoveBallAction in '../action/MoveBallAction';
 uses TakeBallAction in '../action/TakeBallAction';
 
 uses Utils in '../util/Utils';
+uses Logger in '../util/Logger';
 uses Stereometry in '../util/Stereometry';
 uses Mouse in '../util/Mouse';
 uses Graph3D;
@@ -93,7 +94,7 @@ type
       // var ball := new BallType(P3D(0, 0, 0), eventResult.Who, false);
       // m_field.SetBall(eventResult.AddToPlaceInd, ball);
 
-      logln('GameView: Add ball');
+      LoggerT.Debug('GameView: Add ball');
 
       SoundHandlerT.GetSoundPlayer().PlayKnock();
     end
@@ -113,14 +114,13 @@ type
       m_takeBallAction.IsActionOn := false;
     end;
     
-    logln('GameView: method Notify');
+    LoggerT.Debug('GameView: method Notify');
     
     if eventResult.IsNeedToTake then begin
       m_takeBallAction.IsActionOn := true;
     end;
 
-    logln('INFO: GameView: Processed the GameLogic notification');
-    Println('INFO: GameView: Processed the GameLogic notification');
+    LoggerT.Info('GameView: Processed the GameLogic notification');
   end;
 
   procedure GameViewT.AddMouseEvent();
@@ -134,7 +134,7 @@ type
       else if m_moveBallAction.IsMoving then begin
         m_moveBallAction.TryHover(x, y);
       end
-      else if m_addBallAction.IsMoving then begin
+      else if m_addBallAction.IsBallGrabbed then begin
         m_addBallAction.TryHover(x, y);
       end
       else begin
@@ -143,7 +143,7 @@ type
           m_addBallAction.TryHover(x, y);
         end
         else
-          logln('GameView: AddBallAction.UnHover');
+          LoggerT.Debug('GameView: AddBallAction.UnHover');
           m_addBallAction.UnHover();
       end;
     end;

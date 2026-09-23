@@ -40,6 +40,7 @@ type
 
           Key.LeftCtrl: isControlPressed := True;
           Key.Q : if isControlPressed then quitEvent();
+          Key.Escape : quitEvent();
         end;
       end;
 

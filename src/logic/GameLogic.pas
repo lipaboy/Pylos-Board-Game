@@ -1,6 +1,7 @@
 unit GameLogic;
 
 uses Utils in '../util/Utils';
+uses Logger in '../util/Logger';
 
 uses Cell;
 uses Index in '../logic/Index';
@@ -49,7 +50,7 @@ type
     procedure Start();
 
     // Изменение состояние игры (совершение хода)
-    procedure AddBallStep(placeInd : IndexT);
+    function AddBallStep(placeInd : IndexT): boolean;
     procedure MoveBallStep(ballInd, placeInd : IndexT);
     procedure TakeBallsStep(balls : List<IndexT>);
 
@@ -88,9 +89,10 @@ type
 
   // ----------- Реализация методов -------------- //
 
-  procedure GameLogicT.AddBallStep(placeInd : IndexT);
+  function GameLogicT.AddBallStep(placeInd : IndexT): boolean;
   begin
     if placeInd.IsEmpty then begin
+      Result := false;
       exit;
     end;
 
@@ -121,8 +123,9 @@ type
 
     CalcAvailablePos();
 
-    logln('GameLogic: Ball is added');
+    LoggerT.Info('GameLogicT.AddBallStep: Ball is added');
     NotifyAll(eventResult);
+    Result := true;
   end;
 
   procedure GameLogicT.MoveBallStep(ballInd, placeInd : IndexT);

@@ -44,6 +44,13 @@ constructor LoggerT.Create;
 begin
   var now := DateTime.Now.ToString('dd-MM-yyyy');
   m_fileName := now + '_new.log';
+
+  // clear logs
+  if FileExists(m_fileName) then
+    DeleteFile(m_fileName);
+  // var clearingFile := OpenWrite(m_fileName, Encoding.UTF8);
+  // Print(clearingFile, '');
+  // clearingFile.Close();
 end;
 
 //----------------------

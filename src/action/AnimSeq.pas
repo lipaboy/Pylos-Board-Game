@@ -2,6 +2,12 @@ unit AnimSeq;
 
 uses Utils in '../util/Utils';
 
+(*
+      AnimSeqT
+
+  Использует Action0 - похоже какой-то тип коллбэка из PascalABC.Net.
+*)
+
 type
   AnimSeqT = class
   private

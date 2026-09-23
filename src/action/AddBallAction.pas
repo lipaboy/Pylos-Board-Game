@@ -18,15 +18,36 @@ uses GravityAnimation in '../animation/GravityAnimation';
 
 uses AnimSeq;
 
+(*
+          Добавление шара на поле
+
+    В чём особенность данной реализации. Я хочу, чтобы взятие шара
+    и выкладка его на место строилась из анимаций. Анимация поднятия шара,
+    анимация подлёта к предположительному месту посадки, анимация посадки шара.
+
+    В идеале хочется вообще сюда кучу разных анимаций запилить (вращение 
+    двух шаров в танце вихря), возможность вернуть шарик на место,
+    различные артефакты на шарах. 
+
+    Коротко говоря, одно только усовершенствование этой механики (из телепортации шарика
+    перейти к анимации) уже побуждает меня к куче возможных вариаций. Благо я могу оставить
+    свои мысли здесь.
+*)
+
+
+(* Состояние добавления шара на поле разделяется на два этапа:
+  - этап выбора шара с рейки (BALL)
+  - этап выбора места, куда поставить шар (PLACE)
+*)
 type
-  AddBallStateEnumT = (BALL, PLACE);
+  AddBallStateEnumT = (BALL, PLACE, ANIMATING);
 
 type
   AddBallActionT = class
   private
     m_field: FieldViewT;
 
-    m_hoverPlace: IndexT := EmptyIndex();
+    m_hoveredPlace: IndexT := EmptyIndex();
     m_hoverRailInd: Integer := -1;
 
     m_ballSelected: BallType := nil;
@@ -49,8 +70,10 @@ type
 
     procedure Init();
 
-    property HoveredPlace: IndexT read m_hoverPlace;
-    property IsMoving: Boolean read (m_state = AddBallStateEnumT.PLACE);
+    property HoveredPlace: IndexT read m_hoveredPlace;
+    property IsBallGrabbed: Boolean read (m_state = AddBallStateEnumT.PLACE);
+    property IsChoosing: Boolean read (m_state = AddBallStateEnumT.BALL);
+    property IsAnimated: Boolean read (m_state = AddBallStateEnumT.ANIMATING);
 
     function TryPlaceBall(x, y: real): Boolean;
     function TryHover(x, y: real): Boolean;
@@ -82,13 +105,68 @@ type
 
   // _________________ Реализация методов ________________ //
 
+  function AddBallActionT.TryPlaceBall(x, y: real): boolean;
+  begin
+    if Self.IsAnimated then begin
+      LoggerT.Debug('AddBallActionT.TryPlaceBall(): IsAnimated');
+      Result := False;
+      exit;
+    end;
+
+    if Self.IsChoosing then begin
+      if m_hoverRailInd < 0 then
+      begin
+        Result := False;
+        exit;
+      end;
+
+      m_ballSelected := GetRailBall(m_hoverRailInd);
+      m_ballSelected.SetHovered(false);
+      LoggerT.Debug('' + m_ballSelected.Position.Z);
+      m_state := AddBallStateEnumT.ANIMATING;
+      m_gravityAnim.StartFall(m_ballSelected.Figure, 
+                              m_ballSelected.Position.Z + 5.0, 1.0, 
+                              () -> begin m_state := AddBallStateEnumT.PLACE; end);
+      Result := True;
+      exit;
+    end
+    else if Self.IsBallGrabbed then begin
+      var ind: IndexT := Self.HoveredPlace;
+      LoggerT.Debug('AddBallAction.TryPlaceBall(): ind = ' + ind.ToStr());
+      var placeCoord := m_currentBall.Position;
+      var hoverRailInd := m_hoverRailInd;
+      var currPlayer := m_gameLogic.Player.Who;
+      HideFantomBall();
+
+      m_state := AddBallStateEnumT.ANIMATING;
+      m_gravityAnim.StartFall(m_ballSelected.Figure, 
+                              placeCoord.Z, -1.0, 
+                              () -> begin 
+                                m_state := AddBallStateEnumT.BALL; 
+                                m_field.MoveToBoard(hoverRailInd, ind, currPlayer);
+                                if not m_gameLogic.AddBallStep(ind) then
+                                  LoggerT.Error('AddBallActionT.TryPlaceBall: Ball is not added to logic field');
+                                m_hoverRailInd := -1;
+                              end);
+      (* Wtf: Странно, что логика работы с полем происходит здесь, а не в FieldView.
+      Получается AddBallAction - что-то вроде Controller для логики и отображения.
+      Вообще большая ответственность получается. Ещё и анимациями занимается.
+      *)
+      Result := True;
+      exit;
+    end;
+
+    Result := False;
+  end;
+
+  //----------------------
+
   (* Вычисление по координате мышки, какой шар нужно выделить
     и соответствующее выделение. Также обрабатываем каждое
     движение курсора. *)
   function AddBallActionT.TryHover(x, y: real): Boolean;
   begin
-    (* Если шар ещё не движется (т.е. не летит) *)
-    if not Self.IsMoving then begin
+    if Self.IsChoosing then begin
       var iRail := FindNearestAvailableBallToMove(x, y);
 
       if (iRail < 0) then begin (* Не нашли шар для выделения *)
@@ -109,7 +187,7 @@ type
         exit;
       end;
 
-      logln('Hover ball ' + iRail);
+      LoggerT.Debug('Hover ball ' + iRail);
 
       (* Курсор навёлся на новый шар *)
 
@@ -124,8 +202,8 @@ type
       Result := true;
       exit;
     end
-    else begin      
-      (* Шар находится в движении (в полёте) *)
+    else if Self.IsBallGrabbed then begin      
+      (* Шар находится в полёте *)
 
       (* Ищем место, куда можно положить шар *)
       var ind : IndexT := FindNearestAvailablePlaceToAdd(x, y);
@@ -137,47 +215,16 @@ type
         exit;
       end;
 
-      logln('Ball starts flying to ' + ind.ToStr);
+      LoggerT.Debug('AddBallActionT.TryHover(): Ball starts flying to ' + ind.ToStr);
       var coord := m_field.GetCoord(ind);
+
+      (* Собственно полёт шара *)
       FlyBall(coord.x, coord.y);
+      Result := true;
+      exit;
     end;
 
     Result := false;
-  end;
-
-  //----------------------
-
-  function AddBallActionT.TryPlaceBall(x, y: real): boolean;
-  begin
-    if not IsMoving then begin
-      if m_hoverRailInd < 0 then
-      begin
-        Result := False;
-        exit;
-      end;
-
-      m_ballSelected := GetRailBall(m_hoverRailInd);
-      m_ballSelected.SetHovered(false);
-      logln('' + m_ballSelected.Position.Z);
-      m_gravityAnim.StartFall(m_ballSelected.Figure, 
-                              m_ballSelected.Position.Z + 5.0, 1.0);
-      m_state := AddBallStateEnumT.PLACE;
-    end
-    else begin
-      logln('' + m_ballSelected.Position.Z);
-
-      var ind: IndexT := Self.HoveredPlace;
-      var placeCoord := m_currentBall.Position;
-      HideFantomBall();
-
-      m_gravityAnim.StartFall(m_ballSelected.Figure, 
-                              placeCoord.Z, -1.0);
-      m_state := AddBallStateEnumT.BALL;
-      m_field.MoveToBoard(m_hoverRailInd, ind, m_gameLogic.Player.Who);
-      m_gameLogic.AddBallStep(ind);
-      m_hoverRailInd := -1;
-    end;
-    Result := True;
   end;
 
   //----------------------
@@ -186,12 +233,12 @@ type
   function AddBallActionT.PlaceFantomBall(placeInd: IndexT) : Boolean;
   begin
     UpdateCurrentBall();
-    if placeInd = m_hoverPlace then begin
+    if placeInd = Self.HoveredPlace then begin
       Result := false;
       exit;
     end;
 
-    m_hoverPlace := placeInd;
+    m_hoveredPlace := placeInd;
 
     if placeInd = EmptyIndex() then
     begin
@@ -209,11 +256,11 @@ type
 
   procedure AddBallActionT.HideFantomBall();
   begin
-    m_hoverPlace := EmptyIndex();
-    logln('  Hide Fantom BAll');
+    m_hoveredPlace := EmptyIndex();
+    LoggerT.Debug('  Hide Fantom Ball');
     m_currentBall.Visible := false;
     if m_currentBall = m_fantomBrightBall then
-      logln('    bright ball');
+      LoggerT.Debug('    bright ball');
   end;
 
   //----------------------
@@ -222,7 +269,7 @@ type
   begin
     var destPoint := P3D(x, y, m_ballSelected.Position.Z);
 
-    var f: Point3D -> AnimationBase := destPoint -> 
+    var getFlyAnimToPointFunc: Point3D -> AnimationBase := destPoint -> 
       m_ballSelected.Figure.AnimMoveTo(
         destPoint, 1.0, 
         () -> begin 
@@ -230,27 +277,23 @@ type
         end
       ).AccelerationRatio(6.5, 6.0);
 
-    if not m_isFly then begin
-      logln('New Animation');
-
+    if not Self.IsAnimated then begin
       m_animSeq.SetLast(() -> begin 
-        m_isFly := false;
-        logln('      Animation completed 1');
+         LoggerT.Debug('AddBallActionT.FlyBall().last_anim: End flying');
+        m_state := AddBallStateEnumT.PLACE;
       end);
 
-      m_flyAnim := f(destPoint);
+      m_flyAnim := getFlyAnimToPointFunc(destPoint);
 
-      m_isFly := true;
+      m_state := AddBallStateEnumT.ANIMATING;
       m_flyAnim.Begin;
     end
     else begin
-      logln('Add animation');
-
       m_animSeq.Add(() -> begin 
-        m_flyAnim := f(destPoint);
+        m_flyAnim := getFlyAnimToPointFunc(destPoint);
 
         m_flyAnim.Begin;
-        logln('      Extra anim is running');
+        LoggerT.Debug('AddBallActionT.FlyBall(): Extra anim is running');
       end);
     end;
   end;
@@ -273,7 +316,7 @@ type
   procedure AddBallActionT.Init();
   begin
     m_currentBall := m_fantomDarkBall;
-    m_hoverPlace := EmptyIndex();
+    m_hoveredPlace := EmptyIndex();
     m_state := AddBallStateEnumT.BALL;
     UpdateCurrentBall();
   end;
